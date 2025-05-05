@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">p2p</string>
+    <string name="chats">Chats</string>
+    <string name="chat_with_alice">Chat with Alice</string>
+    <string name="type_a_message">Type a message</string>
+    <string name="send">Send</string>
+</resources>
