@@ -24,16 +24,33 @@ public class NetworkInfoHelper {
         WifiInfo info = wifiManager.getConnectionInfo();
         DhcpInfo dhcp = wifiManager.getDhcpInfo();
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("SSID: ").append(info.getSSID()).append("\n");
-        sb.append("BSSID: ").append(info.getBSSID()).append("\n");
-        sb.append("IP Address: ").append(formatIp(info.getIpAddress())).append("\n");
-        sb.append("MAC Address: ").append(getMacAddress()).append("\n");
-        sb.append("Gateway: ").append(formatIp(dhcp.gateway)).append("\n");
-        sb.append("DNS 1: ").append(formatIp(dhcp.dns1)).append("\n");
-        sb.append("DNS 2: ").append(formatIp(dhcp.dns2)).append("\n");
-        sb.append("Netmask: ").append(formatIp(dhcp.netmask)).append("\n");
-        return sb.toString();
+        NetworkInfo i = new NetworkInfo(new LanInterface() {
+
+            @Override
+            public int getIp() {
+                return info.getIpAddress();
+            }
+
+            @Override
+            public int getSubnetMask() {
+                return dhcp.netmask;
+            }
+
+            @Override
+            public int getGatewayIp() {
+                return dhcp.gateway;
+            }
+        });
+
+        return "SSID: " + info.getSSID() + "\n" +
+                "BSSID: " + info.getBSSID() + "\n" +
+                "IP Address: " + formatIp(info.getIpAddress()) + "\n" +
+                "MAC Address: " + getMacAddress() + "\n" +
+                "Gateway: " + formatIp(dhcp.gateway) + "\n" +
+                "DNS 1: " + formatIp(dhcp.dns1) + "\n" +
+                "DNS 2: " + formatIp(dhcp.dns2) + "\n" +
+                "Netmask: " + formatIp(dhcp.netmask) + "\n";
+
     }
 
     @SuppressLint("DefaultLocale")
