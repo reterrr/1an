@@ -1,20 +1,15 @@
 package com.example.p2p;
 
 import android.net.DhcpInfo;
-import android.net.wifi.WifiInfo;
 
-public class WifiLanAccessor implements LanInterface {
-    private final WifiInfo wifiInfo;
-    private final DhcpInfo dhcpInfo;
-
-    public WifiLanAccessor(WifiInfo wifiInfo, DhcpInfo dhcpInfo) {
-        this.wifiInfo = wifiInfo;
+public class WifiLanAccessor implements LanInterfaceInformation {
+    public WifiLanAccessor(DhcpInfo dhcpInfo) {
         this.dhcpInfo = dhcpInfo;
     }
 
     @Override
     public int getIp() {
-        return wifiInfo.getIpAddress();
+        return dhcpInfo.ipAddress;
     }
 
     @Override
@@ -26,4 +21,6 @@ public class WifiLanAccessor implements LanInterface {
     public int getGatewayIp() {
         return dhcpInfo.gateway;
     }
+
+    private final DhcpInfo dhcpInfo;
 }

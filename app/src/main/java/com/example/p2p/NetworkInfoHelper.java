@@ -24,7 +24,7 @@ public class NetworkInfoHelper {
         WifiInfo info = wifiManager.getConnectionInfo();
         DhcpInfo dhcp = wifiManager.getDhcpInfo();
 
-        NetworkInfo i = new NetworkInfo(new LanInterface() {
+        NetworkInfo i = new NetworkInfo(new LanInterfaceInformation() {
 
             @Override
             public int getIp() {

@@ -1,39 +1,52 @@
 package com.example.p2p;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+
 public final class NetworkInfo {
-    public NetworkInfo(LanInterface lanInterface) {
-        this.deviceIp = lanInterface.getIp();
-        this.subnetMask = lanInterface.getSubnetMask();
-        this.gatewayIp = lanInterface.getGatewayIp();
+    public final InetAddress deviceIp;
+    public final InetAddress subnetMask;
+    public final InetAddress gatewayIp;
+    public final InetAddress networkIp;
+    public final InetAddress broadcastIp;
+    public final InetAddress hostMin;
+    public final InetAddress hostMax;
 
-        this.networkIp = this.getNetworkIp();
-        this.broadcastIp = this.getBroadcastIp();
-        this.hostMin = this.getHostMin();
-        this.hostMax = this.getHostMax();
+    public NetworkInfo(LanInterfaceInformation lanInterface) {
+        try {
+            this.deviceIp = intToInet(reverseInt(lanInterface.getIp()));
+            this.subnetMask = intToInet(reverseInt(lanInterface.getSubnetMask()));
+            this.gatewayIp = intToInet(reverseInt(lanInterface.getGatewayIp()));
+
+            int deviceInt = reverseInt(lanInterface.getIp());
+            int maskInt = reverseInt(lanInterface.getSubnetMask());
+
+            int networkInt = deviceInt & maskInt;
+            int broadcastInt = networkInt | ~maskInt;
+            int hostMinInt = networkInt + 1;
+            int hostMaxInt = broadcastInt - 1;
+
+            this.networkIp = intToInet(networkInt);
+            this.broadcastIp = intToInet(broadcastInt);
+            this.hostMin = intToInet(hostMinInt);
+            this.hostMax = intToInet(hostMaxInt);
+        } catch (UnknownHostException e) {
+            throw new RuntimeException("Failed to convert IPs", e);
+        }
     }
 
-    //TODO: do NetworkInfo class needs deviceIp and gatewayIp??
-    public final int deviceIp;
-    public final int broadcastIp;
-    public final int subnetMask;
-    public final int hostMin;
-    public final int hostMax;
-    public final int networkIp;
-    public final int gatewayIp;
-
-    private int getNetworkIp() {
-        return deviceIp & subnetMask;
+    private static InetAddress intToInet(int ip) throws UnknownHostException {
+        byte[] bytes = ByteBuffer.allocate(4).putInt(ip).array();
+        return InetAddress.getByAddress(bytes);
     }
 
-    private int getBroadcastIp() {
-        return networkIp | ~subnetMask;
-    }
+    private static int reverseInt(int ip) {
+        int reverse = 0;
+        for (byte i = 24; i >= 0; i -= 8) {
+            reverse |= ((ip >> 24 - i) & 0xff) << i;
+        }
 
-    private int getHostMin() {
-        return networkIp + 1;
-    }
-
-    private int getHostMax() {
-        return broadcastIp - 1;
+        return reverse;
     }
 }

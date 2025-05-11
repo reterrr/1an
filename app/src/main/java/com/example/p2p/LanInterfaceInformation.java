@@ -1,6 +1,6 @@
 package com.example.p2p;
 
-public interface LanInterface {
+public interface LanInterfaceInformation {
     int getIp();
 
     int getSubnetMask();

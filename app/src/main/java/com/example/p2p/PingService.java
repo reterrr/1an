@@ -1,26 +1,44 @@
 package com.example.p2p;
 
-import java.util.ArrayList;
+import android.util.Log;
+
+import java.net.InetAddress;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
+public final class PingService {
+    private final LanInterfacePinger pinger;
+    private final List<Peer> peers;
+    private static final String TAG = "PingService";
 
-//TODO: make it more abstract i guess
-public class PingService {
-    public List<Integer> getAlivePeers(Network network) {
-        List<Integer> result = new ArrayList<>();
-
-        for (int peer : network) {
-            boolean i = pingPeer(peer);
-
-            if (!i) continue;
-
-            result.add(peer);
-        }
-
-        return result;
+    public PingService(LanInterfacePinger pinger, List<Peer> peers) {
+        this.pinger = pinger;
+        this.peers = (peers instanceof CopyOnWriteArrayList)
+                ? peers
+                : new CopyOnWriteArrayList<>(peers);
     }
 
-    public boolean pingPeer(int peer) {
-        //TODO: ping logic with udp etc.
-        return false;
+    public void getAlivePeersAsync(Network network, String localUserName) {
+        for (InetAddress host : network) {
+            pingPeerAsync(host, localUserName)
+                    .thenAccept(peer -> {
+                        if (peer != null) {
+                            synchronized (peers) {
+                                if (!peers.contains(peer)) {
+                                    peers.add(peer);
+                                    Log.i(TAG, "Added peer: " + peer.userName + " at " + peer.ip.getHostAddress());
+                                }
+                            }
+                        }
+                    })
+                    .exceptionally(throwable -> {
+                        Log.w(TAG, "Failed to ping host " + host.getHostAddress() + ": " + throwable.getMessage());
+                        return null;
+                    });
+        }
+    }
+
+    public CompletableFuture<Peer> pingPeerAsync(InetAddress peerIp, String localUserName) {
+        return pinger.pingPeer(peerIp, localUserName);
     }
 }
