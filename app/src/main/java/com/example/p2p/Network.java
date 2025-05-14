@@ -41,7 +41,6 @@ public class Network implements Iterable<InetAddress> {
                         try {
                             return intToInet(candidate);
                         } catch (UnknownHostException e) {
-                            // Should never happen for valid 4-byte IPv4 addresses
                             throw new RuntimeException("Invalid IP conversion", e);
                         }
                     }

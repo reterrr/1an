@@ -7,19 +7,12 @@ import android.content.Context;
 import android.net.DhcpInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.util.Log;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.p2p.databinding.ActivityMainBinding;
 
-import java.io.IOException;
-import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -35,11 +28,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        NetworkResourceManager.init(getApplicationContext());
+
+
         WifiManager man = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         DhcpInfo info = man.getDhcpInfo();
         i = new WifiLanAccessor(info);
         wifi = new NetworkInfo(i);
-        ArrayList<Peer> list = new ArrayList<>();
+        CopyOnWriteArrayList<User> list = new CopyOnWriteArrayList<>();
         try {
             pinger = new UdpLanPinger("DtlsUdpLanPinger", (char) 1000);
         } catch (Exception e) {
@@ -54,9 +50,16 @@ public class MainActivity extends AppCompatActivity {
             throw new RuntimeException(e);
         }
         service = new PingService(pinger, list);
-        service.getAlivePeersAsync(new Network(wifi), "Mykola");
+        service.getAlivePeers(new Network(wifi), "Mykola");
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
 
 //        binding.sendButton.setOnClickListener(v -> sendUdpPing());
     }
