@@ -8,6 +8,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 
+// FIXME: 5/25/25 
 final class PingClient extends UdpClient {
     public PingClient(String tag) {
         super(tag);
@@ -29,7 +30,9 @@ final class PingClient extends UdpClient {
                         new PingData(
                                 PingData.Message.PING.toString(),
                                 NetworkResourceManager.getNetworkInfo().deviceIp,
-                                PingInfo.pingServerPort
+                                PingInfo.pingServerPort,
+                                // FIXME: 5/25/25 
+                                null 
                         )
                 );
             } catch (IOException e) {
