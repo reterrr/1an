@@ -14,4 +14,13 @@ public final class Host {
         this.port = port;
         this.portOffset = portOffset;
     }
+
+    public Host(InetAddress ip) {
+        this(ip, defaultPort, defaultOffset);
+    }
+
+    public Host(InetAddress ip, int port) {
+        this.ip = ip;
+        this.port = port;
+    }
 }
