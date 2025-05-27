@@ -41,6 +41,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.jmdns)
 
     implementation(libs.appcompat)
     implementation(libs.material)
