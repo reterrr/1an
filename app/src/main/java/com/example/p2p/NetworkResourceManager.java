@@ -9,8 +9,6 @@ import android.net.DhcpInfo;
 import androidx.annotation.NonNull;
 
 public final class NetworkResourceManager {
-    public static final int tryPort = 4444;
-
     public static class Callback extends ConnectivityManager.NetworkCallback {
         @Override
         public void onAvailable(@NonNull Network network) {
