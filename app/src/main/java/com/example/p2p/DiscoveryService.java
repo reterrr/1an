@@ -1,0 +1,162 @@
+package com.example.p2p;
+
+import android.app.Service;
+import android.content.Context;
+import android.content.Intent;
+import android.net.wifi.WifiManager;
+import android.os.Binder;
+import android.os.Build;
+import android.os.IBinder;
+import android.util.Log;
+
+
+import androidx.annotation.Nullable;
+
+import java.io.IOException;
+import java.net.InetAddress;
+import java.util.UUID;
+
+import javax.jmdns.JmDNS;
+import javax.jmdns.ServiceEvent;
+import javax.jmdns.ServiceInfo;
+import javax.jmdns.ServiceListener;
+
+public class DiscoveryService extends Service {
+    private JmDNS jmDNS;
+    private Thread executionThread;
+    private static final String SERVICE_TYPE = "_chat._tcp.local.";
+    private final IBinder binder = new LocalBinder();
+
+    private ServiceListener listener = new ServiceListener() {
+        @Override
+        public void serviceAdded(ServiceEvent event) {
+            jmDNS.requestServiceInfo(event.getType(), event.getName(), 1000);
+        }
+
+        @Override
+        public void serviceRemoved(ServiceEvent event) {
+            removePeer(event.getInfo());
+        }
+
+        @Override
+        public void serviceResolved(ServiceEvent event) {
+            addPeer(event.getInfo());
+        }
+    };
+
+    private void removePeer(ServiceInfo info) {
+        if (DiscoveredPeers.peers.isEmpty()) return;
+
+        Peer peer = new Peer(
+                info.getName(),
+                info.getInetAddresses().length > 0 ? info.getInetAddresses()[0] : null,
+                info.getPort()
+        );
+
+        if (DiscoveredPeers.peers.remove(peer)) {
+            Log.d(DiscoveryService.class.getSimpleName(), "Removed peer: " + peer.userName);
+        }
+    }
+
+    private void addPeer(ServiceInfo info) {
+        if (info.getInetAddresses().length == 0) {
+            Log.w(DiscoveryService.class.getSimpleName(), "No IP addresses found for service: " + info.getName());
+
+            return;
+        }
+
+        Peer peer = new Peer(
+                info.getName(),
+                info.getInetAddresses()[0],
+                info.getPort()
+        );
+
+        if (DiscoveredPeers.peers.contains(peer)) {
+            Log.d(DiscoveryService.class.getSimpleName(), "Peer already exists: " + peer.userName);
+            return;
+        }
+
+        DiscoveredPeers.peers.add(peer);
+        Log.d(DiscoveryService.class.getSimpleName(), "Added peer: " + peer.userName);
+    }
+
+    public class LocalBinder extends Binder {
+        public DiscoveryService getService() {
+            return DiscoveryService.this;
+        }
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        executionThread = new Thread(() -> {
+            try {
+                InetAddress deviceIp = NetworkResourceManager.getNetworkInfo().deviceIp;
+                if (deviceIp == null) {
+                    Log.e(DiscoveryService.class.getSimpleName(), "Device IP is null");
+                    stopSelf();
+                    return;
+                }
+
+                ServiceInfo serviceInfo = ServiceInfo.create(
+                        SERVICE_TYPE,
+                        "username_" + UUID.randomUUID().toString(),
+                        4444,
+                        "P2P Chat Service"
+                );
+
+                WifiManager wifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+                WifiManager.MulticastLock lock = wifi.createMulticastLock("JmDNS");
+                lock.setReferenceCounted(true);
+                lock.acquire();
+
+                jmDNS = JmDNS.create(deviceIp, Build.MODEL);
+                jmDNS.registerService(serviceInfo);
+                jmDNS.addServiceListener(SERVICE_TYPE, listener);
+
+                lock.release();
+            } catch (IOException e) {
+                Log.e(DiscoveryService.class.getSimpleName(), "Failed to initialize JmDNS", e);
+                stopSelf();
+
+            }
+        }, "AEdAOIWU");
+
+        executionThread.start();
+
+
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        //startForegroundServiceNotification();
+
+
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        try {
+            if (jmDNS != null) {
+                jmDNS.removeServiceListener(SERVICE_TYPE, listener);
+                jmDNS.unregisterAllServices();
+                jmDNS.close();
+            }
+            if (executionThread != null) {
+                executionThread.interrupt();
+                executionThread = null;
+            }
+        } catch (IOException e) {
+            Log.e(getClass().getSimpleName(), "Failed to close JmDNS", e);
+        }
+    }
+}

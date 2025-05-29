@@ -12,4 +12,17 @@ public final class Peer {
         this.ip = ip;
         this.port = port;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Peer)) return false;
+        Peer u = (Peer) obj;
+
+        return ip.equals(u.ip) && port == u.port && userName.equals(u.userName);
+    }
+
+    @Override
+    public int hashCode() {
+        return ip.hashCode() + port + userName.hashCode();
+    }
 }
