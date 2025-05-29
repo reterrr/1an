@@ -1,14 +1,9 @@
 package com.example.p2p;
 
 import android.annotation.SuppressLint;
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Looper;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -23,7 +18,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void run() {
             updateUiWithPeers();
-            handler.postDelayed(this, 3000); // Refresh every 3 seconds
+            handler.postDelayed(this, 3000);
         }
     };
 
@@ -38,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
         NetworkResourceManager.init(getApplicationContext());
 
         Intent intent = new Intent(this, DiscoveryService.class);
-        var resutl = startService(intent);
+        startService(intent);
 
         handler.post(peerUpdateRunnable);
     }

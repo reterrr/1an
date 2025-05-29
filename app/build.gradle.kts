@@ -1,5 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
+
+    id("io.objectbox")
 }
 
 android {
@@ -42,6 +44,7 @@ android {
 
 dependencies {
     implementation(libs.jmdns)
+    implementation(libs.objectbox)
 
     implementation(libs.appcompat)
     implementation(libs.material)

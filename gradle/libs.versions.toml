@@ -8,6 +8,7 @@ material = "1.12.0"
 constraintlayout = "2.2.1"
 hiltCommon = "1.2.0"
 jmdns = "3.5.7"
+objectbox = "4.3.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -18,7 +19,9 @@ material = { group = "com.google.android.material", name = "material", version.r
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 hilt-common = { group = "androidx.hilt", name = "hilt-common", version.ref = "hiltCommon" }
 jmdns = { module = "org.jmdns:jmdns", name = "jmdns", version.ref = "jmdns" }
+objectbox = { module = "io.objectbox:objectbox-android", version.ref = "objectbox" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+objectbox = { id = "io.objectbox", version.ref = "objectbox" }
 
