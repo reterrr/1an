@@ -1,24 +1,29 @@
 package com.example.p2p;
 
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 
-
 import androidx.annotation.Nullable;
+
+import com.example.p2p.Model.NetworkInfo;
+import com.example.p2p.Model.User;
+import com.example.p2p.Model.User_;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.List;
 import java.util.UUID;
 
 import javax.jmdns.JmDNS;
 import javax.jmdns.ServiceEvent;
 import javax.jmdns.ServiceInfo;
 import javax.jmdns.ServiceListener;
+
+import io.objectbox.Box;
 
 public class DiscoveryService extends Service {
     private JmDNS jmDNS;
@@ -43,18 +48,37 @@ public class DiscoveryService extends Service {
     };
 
     private void removePeer(ServiceInfo info) {
-        if (DiscoveredPeers.peers.isEmpty()) return;
+        String nickname = info.getName();
+        String ip = info.getInetAddresses().length > 0 ? info.getInetAddresses()[0].getHostAddress() : null;
+        long port = info.getPort();
 
-        Peer peer = new Peer(
-                info.getName(),
-                info.getInetAddresses().length > 0 ? info.getInetAddresses()[0] : null,
-                info.getPort()
-        );
-
-        if (DiscoveredPeers.peers.remove(peer)) {
-            Log.d(DiscoveryService.class.getSimpleName(), "Removed peer: " + peer.userName);
+        if (ip == null) {
+            Log.w(DiscoveryService.class.getSimpleName(), "Cannot remove peer: No IP address found.");
+            return;
         }
+
+        Box<User> userBox = ObjectBox.get().boxFor(User.class);
+        Box<NetworkInfo> netBox = ObjectBox.get().boxFor(NetworkInfo.class);
+
+        List<User> users = userBox.query(
+                        User_.nickname.equal(nickname)
+                )
+                .build()
+                .find();
+
+        for (User user : users) {
+            NetworkInfo netInfo = user.networkInfo.getTarget();
+            if (netInfo != null && ip.equals(netInfo.ip) && port == netInfo.port) {
+                netBox.remove(netInfo.id);
+                userBox.remove(user.id);
+                Log.d(DiscoveryService.class.getSimpleName(), "Removed peer from DB: " + nickname);
+                return;
+            }
+        }
+
+        Log.d(DiscoveryService.class.getSimpleName(), "Peer not found in DB: " + nickname);
     }
+
 
     private void addPeer(ServiceInfo info) {
         if (info.getInetAddresses().length == 0) {
@@ -63,21 +87,40 @@ public class DiscoveryService extends Service {
             return;
         }
 
-        Peer peer = new Peer(
-                info.getName(),
-                info.getInetAddresses()[0],
-                info.getPort()
-        );
+        String nickname = info.getName();
+        String ip = info.getInetAddresses()[0].getHostAddress();
+        long port = info.getPort();
 
-        if (DiscoveredPeers.peers.contains(peer)) {
-            Log.d(DiscoveryService.class.getSimpleName(), "Peer already exists: " + peer.userName);
-            return;
+        Box<User> userBox = ObjectBox.get().boxFor(User.class);
+        Box<NetworkInfo> netInfoBox = ObjectBox.get().boxFor(NetworkInfo.class);
+
+        List<User> existingUsers = userBox.query(
+                        User_.nickname.equal(nickname)
+                )
+                .build()
+                .find();
+
+        for (User existing : existingUsers) {
+            NetworkInfo ni = existing.networkInfo.getTarget();
+            if (ni != null && ni.ip.equals(ip) && ni.port == port) {
+                Log.d(DiscoveryService.class.getSimpleName(), "Peer already exists: " + nickname);
+                return;
+            }
         }
 
-        DiscoveredPeers.peers.add(peer);
-        Log.d(DiscoveryService.class.getSimpleName(), "Added peer: " + peer.userName);
+        NetworkInfo networkInfo = new NetworkInfo();
+        networkInfo.ip = ip;
+        networkInfo.port = port;
+        netInfoBox.put(networkInfo);
+
+        User user = new User();
+        user.nickname = nickname;
+        user.networkInfo.setTarget(networkInfo);
+        userBox.put(user);
+
+        Log.d(DiscoveryService.class.getSimpleName(), "Added peer: " + nickname);
     }
-    
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         executionThread = new Thread(() -> {
