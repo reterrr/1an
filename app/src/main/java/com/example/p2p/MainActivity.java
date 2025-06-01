@@ -6,9 +6,16 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.example.p2p.Model.NetworkInfo;
+import com.example.p2p.Model.User;
+
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.p2p.databinding.ActivityMainBinding;
+
+import java.util.List;
+
+import io.objectbox.Box;
 
 public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
@@ -38,15 +45,26 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateUiWithPeers() {
         StringBuilder sb = new StringBuilder();
-        if (DiscoveredPeers.peers.isEmpty()) {
+
+        Box<User> userBox = ObjectBox.get().boxFor(User.class);
+
+        List<User> peers = userBox.query()
+                .build()
+                .find();
+
+        if (peers.isEmpty()) {
             sb.append("No peers discovered.");
         } else {
-            for (Peer peer : DiscoveredPeers.peers) {
-                sb.append(peer.userName)
+            for (User peer : peers) {
+                NetworkInfo net = peer.networkInfo.getTarget();
+                String ip = net != null ? net.ip : "Unknown IP";
+                long port = net != null ? net.port : -1;
+
+                sb.append(peer.nickname)
                         .append(" @ ")
-                        .append(peer.ip != null ? peer.ip.getHostAddress() : "Unknown IP")
+                        .append(ip)
                         .append(":")
-                        .append(peer.port)
+                        .append(port)
                         .append("\n");
             }
         }
