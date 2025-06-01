@@ -5,23 +5,15 @@ import java.util.Date;
 import io.objectbox.annotation.Entity;
 import io.objectbox.annotation.Id;
 import io.objectbox.relation.ToOne;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
-public final class Message {
+public class Message {
     @Id
-    private long id;
+    public long id;
 
-    private ToOne<Chat> chat;
-    private ToOne<User> sender;
+    public ToOne<Chat> chat;
+    public ToOne<User> sender;
 
-    private String content;
-    private Date timestamp;
+    public String content;
+    public Date timestamp;
 }
