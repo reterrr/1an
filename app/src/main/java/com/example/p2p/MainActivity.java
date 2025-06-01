@@ -30,8 +30,6 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        NetworkResourceManager.init(getApplicationContext());
-
         Intent intent = new Intent(this, DiscoveryService.class);
         startService(intent);
 
