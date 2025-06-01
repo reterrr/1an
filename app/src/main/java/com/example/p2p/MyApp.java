@@ -8,5 +8,6 @@ public class MyApp extends Application {
         super.onCreate();
 
         NetworkResourceManager.init(this);
+        ObjectBox.init(this);
     }
 }
