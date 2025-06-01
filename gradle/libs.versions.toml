@@ -10,6 +10,7 @@ constraintlayout = "2.2.1"
 hiltCommon = "1.2.0"
 jmdns = "3.5.7"
 objectbox = "4.3.0"
+signal = "2.8.1"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -22,6 +23,7 @@ constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayo
 hilt-common = { group = "androidx.hilt", name = "hilt-common", version.ref = "hiltCommon" }
 jmdns = { module = "org.jmdns:jmdns", name = "jmdns", version.ref = "jmdns" }
 objectbox = { module = "io.objectbox:objectbox-android", version.ref = "objectbox" }
+signal = { module = "org.whispersystems:signal-protocol-java", version.ref = "signal" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

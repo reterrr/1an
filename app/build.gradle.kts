@@ -48,6 +48,7 @@ dependencies {
     implementation(libs.jmdns)
     implementation(libs.objectbox)
     implementation(libs.lombok)
+    implementation(libs.signal)
 
     implementation(libs.appcompat)
     implementation(libs.material)
