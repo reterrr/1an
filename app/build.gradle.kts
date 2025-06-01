@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
 
     id("io.objectbox")
+
+    id("io.freefair.lombok") version "8.4" // modern Lombok plugin
 }
 
 android {
@@ -45,6 +47,7 @@ android {
 dependencies {
     implementation(libs.jmdns)
     implementation(libs.objectbox)
+    implementation(libs.lombok)
 
     implementation(libs.appcompat)
     implementation(libs.material)
@@ -53,4 +56,10 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+
+    annotationProcessor(libs.lombok)
+}
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
