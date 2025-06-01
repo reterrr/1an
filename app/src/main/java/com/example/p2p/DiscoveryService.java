@@ -4,7 +4,6 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.net.wifi.WifiManager;
-import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
@@ -25,9 +24,8 @@ public class DiscoveryService extends Service {
     private JmDNS jmDNS;
     private Thread executionThread;
     private static final String SERVICE_TYPE = "_chat._tcp.local.";
-    private final IBinder binder = new LocalBinder();
 
-    private ServiceListener listener = new ServiceListener() {
+    private final ServiceListener listener = new ServiceListener() {
         @Override
         public void serviceAdded(ServiceEvent event) {
             jmDNS.requestServiceInfo(event.getType(), event.getName(), 1000);
@@ -79,13 +77,7 @@ public class DiscoveryService extends Service {
         DiscoveredPeers.peers.add(peer);
         Log.d(DiscoveryService.class.getSimpleName(), "Added peer: " + peer.userName);
     }
-
-    public class LocalBinder extends Binder {
-        public DiscoveryService getService() {
-            return DiscoveryService.this;
-        }
-    }
-
+    
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         executionThread = new Thread(() -> {
@@ -104,7 +96,7 @@ public class DiscoveryService extends Service {
                         "P2P Chat Service"
                 );
 
-                WifiManager wifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+                WifiManager wifi = NetworkResourceManager.getWifiManager();
                 WifiManager.MulticastLock lock = wifi.createMulticastLock("JmDNS");
                 lock.setReferenceCounted(true);
                 lock.acquire();
@@ -119,20 +111,12 @@ public class DiscoveryService extends Service {
                 stopSelf();
 
             }
-        }, "AEdAOIWU");
+        });
 
         executionThread.start();
 
 
         return super.onStartCommand(intent, flags, startId);
-    }
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        //startForegroundServiceNotification();
-
-
     }
 
     @Nullable
@@ -150,13 +134,22 @@ public class DiscoveryService extends Service {
                 jmDNS.removeServiceListener(SERVICE_TYPE, listener);
                 jmDNS.unregisterAllServices();
                 jmDNS.close();
+                jmDNS = null;
             }
+        } catch (IOException e) {
+            Log.e(getClass().getSimpleName(), "Failed to close JmDNS", e);
+        } finally {
+            DiscoveredPeers.peers.clear();
             if (executionThread != null) {
                 executionThread.interrupt();
                 executionThread = null;
             }
-        } catch (IOException e) {
-            Log.e(getClass().getSimpleName(), "Failed to close JmDNS", e);
+
+            WifiManager wifi = NetworkResourceManager.getWifiManager();
+            WifiManager.MulticastLock lock = wifi.createMulticastLock("JmDNS");
+            if (lock.isHeld()) {
+                lock.release();
+            }
         }
     }
 }
