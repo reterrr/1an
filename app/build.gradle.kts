@@ -10,6 +10,15 @@ android {
     namespace = "com.example.p2p"
     compileSdk = 35
 
+    packaging {
+        resources {
+
+            pickFirsts += "META-INF/io.netty.versions.properties"
+
+            excludes += "META-INF/INDEX.LIST"
+        }
+    }
+
     defaultConfig {
         applicationId = "com.example.p2p"
         minSdk = 28
@@ -49,6 +58,16 @@ dependencies {
     implementation(libs.objectbox)
     implementation(libs.lombok)
     implementation(libs.signal)
+
+    implementation(libs.jackson.databind)
+    implementation(libs.jackson.core)
+    implementation(libs.jackson.annotations)
+    implementation(libs.jackson.datatype.jsr310)
+
+    implementation(libs.nb)
+    implementation(libs.nc)
+    implementation(libs.nh)
+    implementation(libs.nt)
 
     implementation(libs.appcompat)
     implementation(libs.material)

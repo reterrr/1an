@@ -1,5 +1,7 @@
 [versions]
 agp = "8.9.1"
+jacksonDatabind = "2.15.3"
+jacksonDatatypeJsr310 = "2.15.3"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
@@ -9,10 +11,15 @@ material = "1.12.0"
 constraintlayout = "2.2.1"
 hiltCommon = "1.2.0"
 jmdns = "3.5.7"
+nettyAll = "4.1.99.Final"
 objectbox = "4.3.0"
 signal = "2.8.1"
 
 [libraries]
+jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jacksonDatabind" }
+jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jacksonDatabind" }
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jacksonDatabind" }
+jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jacksonDatatypeJsr310" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -22,6 +29,10 @@ material = { group = "com.google.android.material", name = "material", version.r
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 hilt-common = { group = "androidx.hilt", name = "hilt-common", version.ref = "hiltCommon" }
 jmdns = { module = "org.jmdns:jmdns", name = "jmdns", version.ref = "jmdns" }
+nb = { module = "io.netty:netty-buffer", version.ref = "nettyAll" }
+nh = { module = "io.netty:netty-handler", version.ref = "nettyAll" }
+nt = { module = "io.netty:netty-transport", version.ref = "nettyAll" }
+nc = { module = "io.netty:netty-codec", version.ref = "nettyAll" }
 objectbox = { module = "io.objectbox:objectbox-android", version.ref = "objectbox" }
 signal = { module = "org.whispersystems:signal-protocol-java", version.ref = "signal" }
 

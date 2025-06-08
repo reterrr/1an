@@ -10,6 +10,7 @@ import com.example.p2p.Model.NetworkInfo;
 import com.example.p2p.Model.User;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.example.p2p.databinding.ActivityMainBinding;
 
@@ -22,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Runnable peerUpdateRunnable = new Runnable() {
+
         @Override
         public void run() {
             updateUiWithPeers();
@@ -37,8 +39,11 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        Intent intent = new Intent(this, DiscoveryService.class);
-        startService(intent);
+        Intent discovery = new Intent(this, DiscoveryService.class);
+        startForegroundService(discovery);
+
+        Intent server = new Intent(this, ServerService.class);
+        startForegroundService(server);
 
         handler.post(peerUpdateRunnable);
     }

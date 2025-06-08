@@ -1,5 +1,8 @@
 package com.example.p2p;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
 import android.net.wifi.WifiManager;
@@ -8,6 +11,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
 
 import com.example.p2p.Model.NetworkInfo;
 import com.example.p2p.Model.User;
@@ -16,7 +20,6 @@ import com.example.p2p.Model.User_;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.List;
-import java.util.UUID;
 
 import javax.jmdns.JmDNS;
 import javax.jmdns.ServiceEvent;
@@ -26,6 +29,7 @@ import javax.jmdns.ServiceListener;
 import io.objectbox.Box;
 
 public class DiscoveryService extends Service {
+    private static final String CHANNEL_ID = "DISCOVERY_CHANNEL";
     private JmDNS jmDNS;
     private Thread executionThread;
     private static final String SERVICE_TYPE = "_chat._tcp.local.";
@@ -134,8 +138,8 @@ public class DiscoveryService extends Service {
 
                 ServiceInfo serviceInfo = ServiceInfo.create(
                         SERVICE_TYPE,
-                        "username_" + UUID.randomUUID().toString(),
-                        4444,
+                        "username_@" + Build.MODEL,
+                        ServerInfo.getServerPort(),
                         "P2P Chat Service"
                 );
 
@@ -158,8 +162,30 @@ public class DiscoveryService extends Service {
 
         executionThread.start();
 
+        return START_STICKY;
+    }
 
-        return super.onStartCommand(intent, flags, startId);
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        createNotificationChannel();
+        Notification notif = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("P2P Discovery Running")
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .build();
+
+        startForeground(101, notif);
+    }
+
+    private void createNotificationChannel() {
+        NotificationChannel chan = new NotificationChannel(
+                CHANNEL_ID,
+                "Discovery Service",
+                NotificationManager.IMPORTANCE_LOW
+        );
+
+        getSystemService(NotificationManager.class)
+                .createNotificationChannel(chan);
     }
 
     @Nullable
