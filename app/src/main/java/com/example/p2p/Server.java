@@ -1,6 +1,10 @@
 package com.example.p2p;
 
 
+import android.content.Intent;
+
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import java.net.InetSocketAddress;
 import java.util.function.Consumer;
 
@@ -22,14 +26,20 @@ public final class Server {
     private final int port;
     private final RouterHandler routerHandler;
     private ChannelFuture future;
+    private final PortListener listener;
+
+    public interface PortListener {
+        void onPortReady(int port);
+    }
 
 
     public void configMapping(Consumer<RouterHandler> configurator) {
         configurator.accept(routerHandler);
     }
 
-    public Server(int port) {
+    public Server(int port, PortListener portListener) {
         this.port = port;
+        this.listener = portListener;
         this.routerHandler = new RouterHandler();
     }
 
@@ -69,6 +79,9 @@ public final class Server {
                     });
 
             future = b.bind(port).sync();
+
+            int boundPort = ((InetSocketAddress) future.channel().localAddress()).getPort();
+            listener.onPortReady(boundPort);
 
             future.channel().closeFuture().sync();
 

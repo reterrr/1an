@@ -10,6 +10,7 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.p2p.RequestHandlers.SendHandler;
 
@@ -51,20 +52,25 @@ public class ServerService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Server server = new Server(8888);
+        Server server = new Server(8888, boundPort -> {
+            ServerInfo.setServerPort(boundPort);
+
+            Intent ready = new Intent("com.example.p2p.ACTION_PORT_READY");
+            ready.putExtra("port", boundPort);
+            LocalBroadcastManager.getInstance(ServerService.this)
+                    .sendBroadcast(ready);
+        });
         server.configMapping(r -> r.register("/messages/send", new SendHandler()));
 
         new Thread(() -> {
             try {
                 server.run();
-                ServerInfo.setServerPort(server.getPort());
-                Log.i(TAG, "Server started successfully on port " + server.getPort());
             } catch (SSLException |
                      InterruptedException e) {
                 Log.e(TAG, "Failed to start server", e);
                 throw new RuntimeException("Failed to start server", e);
             }
-        });
+        }).start();
 
         return START_STICKY;
     }

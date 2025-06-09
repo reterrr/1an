@@ -4,7 +4,10 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.IBinder;
@@ -12,13 +15,15 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.example.p2p.Model.NetworkInfo;
 import com.example.p2p.Model.User;
 import com.example.p2p.Model.User_;
+import com.example.p2p.Model.NetworkInfo;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.List;
 
 import javax.jmdns.JmDNS;
@@ -30,9 +35,10 @@ import io.objectbox.Box;
 
 public class DiscoveryService extends Service {
     private static final String CHANNEL_ID = "DISCOVERY_CHANNEL";
-    private JmDNS jmDNS;
-    private Thread executionThread;
     private static final String SERVICE_TYPE = "_chat._tcp.local.";
+    private static final String TAG = DiscoveryService.class.toString();
+    private JmDNS jmDNS;
+    private WifiManager.MulticastLock lock;
 
     private final ServiceListener listener = new ServiceListener() {
         @Override
@@ -80,6 +86,12 @@ public class DiscoveryService extends Service {
             }
         }
 
+        try {
+            PeerRepository.getInstance().removePeer(new Peer(nickname, InetAddress.getByName(ip), (int) port));
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
+
         Log.d(DiscoveryService.class.getSimpleName(), "Peer not found in DB: " + nickname);
     }
 
@@ -95,87 +107,58 @@ public class DiscoveryService extends Service {
         String ip = info.getInetAddresses()[0].getHostAddress();
         long port = info.getPort();
 
-        Box<User> userBox = ObjectBox.get().boxFor(User.class);
-        Box<NetworkInfo> netInfoBox = ObjectBox.get().boxFor(NetworkInfo.class);
+//        Box<User> userBox = ObjectBox.get().boxFor(User.class);
+//        Box<NetworkInfo> netInfoBox = ObjectBox.get().boxFor(NetworkInfo.class);
+//
+//        List<User> existingUsers = userBox.query(
+//                        User_.nickname.equal(nickname)
+//                )
+//                .build()
+//                .find();
+//
+//        for (User existing : existingUsers) {
+//            NetworkInfo ni = existing.networkInfo.getTarget();
+//            if (ni != null && ni.ip.equals(ip) && ni.port == port) {
+//                Log.d(DiscoveryService.class.getSimpleName(), "Peer already exists: " + nickname);
+//                return;
+//            }
+//        }
 
-        List<User> existingUsers = userBox.query(
-                        User_.nickname.equal(nickname)
-                )
-                .build()
-                .find();
+//        NetworkInfo networkInfo = new NetworkInfo();
+//        networkInfo.ip = ip;
+//        networkInfo.port = port;
+//        netInfoBox.put(networkInfo);
+//
+//        User user = new User();
+//        user.nickname = nickname;
+//        user.networkInfo.setTarget(networkInfo);
+//        userBox.put(user);
 
-        for (User existing : existingUsers) {
-            NetworkInfo ni = existing.networkInfo.getTarget();
-            if (ni != null && ni.ip.equals(ip) && ni.port == port) {
-                Log.d(DiscoveryService.class.getSimpleName(), "Peer already exists: " + nickname);
-                return;
-            }
+        try {
+            Peer peer = new Peer(nickname, InetAddress.getByName(ip), (int) port);
+            if (!PeerRepository.getInstance().getPeers().getValue().contains(peer))
+                PeerRepository.getInstance().addPeer(peer);
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
         }
-
-        NetworkInfo networkInfo = new NetworkInfo();
-        networkInfo.ip = ip;
-        networkInfo.port = port;
-        netInfoBox.put(networkInfo);
-
-        User user = new User();
-        user.nickname = nickname;
-        user.networkInfo.setTarget(networkInfo);
-        userBox.put(user);
 
         Log.d(DiscoveryService.class.getSimpleName(), "Added peer: " + nickname);
     }
 
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        executionThread = new Thread(() -> {
-            try {
-                InetAddress deviceIp = NetworkResourceManager.getNetworkInfo().deviceIp;
-                if (deviceIp == null) {
-                    Log.e(DiscoveryService.class.getSimpleName(), "Device IP is null");
-                    stopSelf();
-                    return;
-                }
+    private final BroadcastReceiver portReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context ctx, Intent intent) {
+            int port = intent.getIntExtra("port", 0);
+            if (port == 0) return;
 
-                ServiceInfo serviceInfo = ServiceInfo.create(
-                        SERVICE_TYPE,
-                        "username_@" + Build.MODEL,
-                        ServerInfo.getServerPort(),
-                        "P2P Chat Service"
-                );
+            // unregister so we only run once
+            LocalBroadcastManager.getInstance(DiscoveryService.this)
+                    .unregisterReceiver(this);
 
-                WifiManager wifi = NetworkResourceManager.getWifiManager();
-                WifiManager.MulticastLock lock = wifi.createMulticastLock("JmDNS");
-                lock.setReferenceCounted(true);
-                lock.acquire();
-
-                jmDNS = JmDNS.create(deviceIp, Build.MODEL);
-                jmDNS.registerService(serviceInfo);
-                jmDNS.addServiceListener(SERVICE_TYPE, listener);
-
-                lock.release();
-            } catch (IOException e) {
-                Log.e(DiscoveryService.class.getSimpleName(), "Failed to initialize JmDNS", e);
-                stopSelf();
-
-            }
-        });
-
-        executionThread.start();
-
-        return START_STICKY;
-    }
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        createNotificationChannel();
-        Notification notif = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("P2P Discovery Running")
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .build();
-
-        startForeground(101, notif);
-    }
+            // now that we have the port, initialize & register JmDNS
+            registerMdns(port);
+        }
+    };
 
     private void createNotificationChannel() {
         NotificationChannel chan = new NotificationChannel(
@@ -188,37 +171,86 @@ public class DiscoveryService extends Service {
                 .createNotificationChannel(chan);
     }
 
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        createNotificationChannel();
+
+        Notification notif = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("P2P Discovery Running")
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .build();
+
+        startForeground(101, notif);
+
+        // register to receive the port-ready broadcast
+        LocalBroadcastManager.getInstance(this)
+                .registerReceiver(portReceiver, new IntentFilter("com.example.p2p.ACTION_PORT_READY"));
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        // nothing else here — we’ll react in the portReceiver
+        return START_STICKY;
+    }
+
+    private void registerMdns(int port) {
+        try {
+            // 1) grab device IP & multicast lock
+            InetAddress deviceIp = NetworkResourceManager.getNetworkInfo().deviceIp;
+            if (deviceIp == null) {
+                Log.e(TAG, "Device IP is null");
+                stopSelf();
+                return;
+            }
+            WifiManager wifi = NetworkResourceManager.getWifiManager();
+            lock = wifi.createMulticastLock("JmDNS");
+            lock.setReferenceCounted(true);
+            lock.acquire();
+
+            // 2) create JmDNS and register your service
+            jmDNS = JmDNS.create(deviceIp, Build.MODEL);
+
+            ServiceInfo serviceInfo = ServiceInfo.create(
+                    SERVICE_TYPE,
+                    "username_@" + Build.MODEL,
+                    port,
+                    "P2P Chat Service"
+            );
+            jmDNS.registerService(serviceInfo);
+            jmDNS.addServiceListener(SERVICE_TYPE, listener);
+
+            Log.i(TAG, "mDNS service registered on port " + port);
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to register mDNS", e);
+            stopSelf();
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        // cleanup JmDNS & multicast lock
+        if (jmDNS != null) {
+            jmDNS.removeServiceListener(SERVICE_TYPE, listener);
+            jmDNS.unregisterAllServices();
+            try {
+                jmDNS.close();
+            } catch (IOException ignored) {
+            }
+        }
+        if (lock != null && lock.isHeld()) {
+            lock.release();
+        }
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(portReceiver);
+    }
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        try {
-            if (jmDNS != null) {
-                jmDNS.removeServiceListener(SERVICE_TYPE, listener);
-                jmDNS.unregisterAllServices();
-                jmDNS.close();
-                jmDNS = null;
-            }
-        } catch (IOException e) {
-            Log.e(getClass().getSimpleName(), "Failed to close JmDNS", e);
-        } finally {
-            DiscoveredPeers.peers.clear();
-            if (executionThread != null) {
-                executionThread.interrupt();
-                executionThread = null;
-            }
-
-            WifiManager wifi = NetworkResourceManager.getWifiManager();
-            WifiManager.MulticastLock lock = wifi.createMulticastLock("JmDNS");
-            if (lock.isHeld()) {
-                lock.release();
-            }
-        }
-    }
+    // … your existing serviceAdded/serviceResolved listeners, createNotificationChannel, etc. …
 }
+

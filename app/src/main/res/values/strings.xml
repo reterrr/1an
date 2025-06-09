@@ -4,4 +4,8 @@
     <string name="chat_with_alice">Chat with Alice</string>
     <string name="type_a_message">Type a message</string>
     <string name="send">Send</string>
+    <string name="connected_peers">Connected Peers</string>
+    <string name="username">Username: %1$s</string>
+    <string name="ip">IP: %1$s</string>
+    <string name="port">Port: %1$d</string>
 </resources>
