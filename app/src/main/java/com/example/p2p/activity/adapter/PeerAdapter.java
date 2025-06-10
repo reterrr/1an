@@ -1,4 +1,4 @@
-package com.example.p2p.activity;
+package com.example.p2p.activity.adapter;
 
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -51,7 +51,7 @@ public class PeerAdapter extends RecyclerView.Adapter<PeerAdapter.PeerViewHolder
         return peerList.size();
     }
 
-    class PeerViewHolder extends RecyclerView.ViewHolder {
+    public class PeerViewHolder extends RecyclerView.ViewHolder {
         private final ItemPeerBinding binding;
 
         PeerViewHolder(ItemPeerBinding binding) {

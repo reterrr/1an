@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingVertical="4dp">
+
+    <!-- Peer message: left bubble -->
+    <TextView
+        android:id="@+id/tvPeer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_bubble_peer"
+        android:padding="8dp"
+        android:layout_gravity="start"/>
+
+    <!-- My message: right bubble -->
+    <TextView
+        android:id="@+id/tvMine"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_bubble_mine"
+        android:padding="8dp"
+        android:layout_gravity="end"/>
+</FrameLayout>

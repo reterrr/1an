@@ -10,10 +10,10 @@ import io.objectbox.relation.ToOne;
 public class Message {
     @Id
     public long id;
-
     public ToOne<Chat> chat;
     public ToOne<User> sender;
 
     public String content;
-    public Date timestamp;
+    public Date createdTimestamp;
+    public Date updatedTimestamp;
 }

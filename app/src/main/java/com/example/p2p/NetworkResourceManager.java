@@ -64,6 +64,15 @@ public final class NetworkResourceManager {
         }
     }
 
+    public static com.example.p2p.Model.NetworkInfo getDeviceNetworkInfo() {
+        var netInfo = new com.example.p2p.Model.NetworkInfo();
+
+        netInfo.port = ServerInfo.getServerPort();
+        netInfo.ip = getNetworkInfo().deviceIp.toString();
+
+        return netInfo;
+    }
+
     public static WifiManager getWifiManager() {
         return wifiManager;
     }

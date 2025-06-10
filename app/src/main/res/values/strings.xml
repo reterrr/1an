@@ -8,4 +8,11 @@
     <string name="username">Username: %1$s</string>
     <string name="ip">IP: %1$s</string>
     <string name="port">Port: %1$d</string>
+    <string name="email" />
+    <string name="toggle_password" />
+    <string name="login" />
+    <string name="don_t_have_an_account" />
+    <string name="register" />
+    <string name="logo" />
+    <string name="password" />
 </resources>

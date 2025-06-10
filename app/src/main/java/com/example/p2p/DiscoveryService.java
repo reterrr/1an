@@ -18,7 +18,6 @@ import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.p2p.Model.User;
-import com.example.p2p.Model.User_;
 import com.example.p2p.Model.NetworkInfo;
 
 import java.io.IOException;
@@ -67,32 +66,32 @@ public class DiscoveryService extends Service {
             return;
         }
 
-        Box<User> userBox = ObjectBox.get().boxFor(User.class);
-        Box<NetworkInfo> netBox = ObjectBox.get().boxFor(NetworkInfo.class);
-
-        List<User> users = userBox.query(
-                        User_.nickname.equal(nickname)
-                )
-                .build()
-                .find();
-
-        for (User user : users) {
-            NetworkInfo netInfo = user.networkInfo.getTarget();
-            if (netInfo != null && ip.equals(netInfo.ip) && port == netInfo.port) {
-                netBox.remove(netInfo.id);
-                userBox.remove(user.id);
-                Log.d(DiscoveryService.class.getSimpleName(), "Removed peer from DB: " + nickname);
-                return;
-            }
-        }
-
-        try {
-            PeerRepository.getInstance().removePeer(new Peer(nickname, InetAddress.getByName(ip), (int) port));
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);
-        }
-
-        Log.d(DiscoveryService.class.getSimpleName(), "Peer not found in DB: " + nickname);
+//        Box<User> userBox = ObjectBox.get().boxFor(User.class);
+//        Box<NetworkInfo> netBox = ObjectBox.get().boxFor(NetworkInfo.class);
+//
+//        List<User> users = userBox.query(
+//                        User_.username.equal(nickname)
+//                )
+//                .build()
+//                .find();
+//
+//        for (User user : users) {
+//            NetworkInfo netInfo = user.networkInfo.getTarget();
+//            if (netInfo != null && ip.equals(netInfo.ip) && port == netInfo.port) {
+//                netBox.remove(netInfo.id);
+//                userBox.remove(user.id);
+//                Log.d(DiscoveryService.class.getSimpleName(), "Removed peer from DB: " + nickname);
+//                return;
+//            }
+//        }
+//
+//        try {
+//            PeerRepository.getInstance().removePeer(new Peer(nickname, InetAddress.getByName(ip), (int) port));
+//        } catch (UnknownHostException e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//        Log.d(DiscoveryService.class.getSimpleName(), "Peer not found in DB: " + nickname);
     }
 
 
@@ -151,11 +150,9 @@ public class DiscoveryService extends Service {
             int port = intent.getIntExtra("port", 0);
             if (port == 0) return;
 
-            // unregister so we only run once
             LocalBroadcastManager.getInstance(DiscoveryService.this)
                     .unregisterReceiver(this);
 
-            // now that we have the port, initialize & register JmDNS
             registerMdns(port);
         }
     };
@@ -182,21 +179,17 @@ public class DiscoveryService extends Service {
                 .build();
 
         startForeground(101, notif);
-
-        // register to receive the port-ready broadcast
         LocalBroadcastManager.getInstance(this)
                 .registerReceiver(portReceiver, new IntentFilter("com.example.p2p.ACTION_PORT_READY"));
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // nothing else here — we’ll react in the portReceiver
         return START_STICKY;
     }
 
     private void registerMdns(int port) {
         try {
-            // 1) grab device IP & multicast lock
             InetAddress deviceIp = NetworkResourceManager.getNetworkInfo().deviceIp;
             if (deviceIp == null) {
                 Log.e(TAG, "Device IP is null");
@@ -207,8 +200,6 @@ public class DiscoveryService extends Service {
             lock = wifi.createMulticastLock("JmDNS");
             lock.setReferenceCounted(true);
             lock.acquire();
-
-            // 2) create JmDNS and register your service
             jmDNS = JmDNS.create(deviceIp, Build.MODEL);
 
             ServiceInfo serviceInfo = ServiceInfo.create(
@@ -230,7 +221,6 @@ public class DiscoveryService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        // cleanup JmDNS & multicast lock
         if (jmDNS != null) {
             jmDNS.removeServiceListener(SERVICE_TYPE, listener);
             jmDNS.unregisterAllServices();
@@ -250,7 +240,5 @@ public class DiscoveryService extends Service {
     public IBinder onBind(Intent intent) {
         return null;
     }
-
-    // … your existing serviceAdded/serviceResolved listeners, createNotificationChannel, etc. …
 }
 

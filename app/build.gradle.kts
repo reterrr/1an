@@ -58,6 +58,7 @@ dependencies {
     implementation(libs.objectbox)
     implementation(libs.lombok)
     implementation(libs.signal)
+    implementation(libs.bcrypt)
 
     implementation(libs.jackson.databind)
     implementation(libs.jackson.core)

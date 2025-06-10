@@ -60,6 +60,7 @@ public class ServerService extends Service {
             LocalBroadcastManager.getInstance(ServerService.this)
                     .sendBroadcast(ready);
         });
+
         server.configMapping(r -> r.register("/messages/send", new SendHandler()));
 
         new Thread(() -> {

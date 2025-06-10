@@ -1,18 +1,18 @@
 package com.example.p2p.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
-import com.example.p2p.Peer;
+import com.example.p2p.Model.Chat;
 import com.example.p2p.PeerRepository;
+import com.example.p2p.activity.adapter.PeerAdapter;
 import com.example.p2p.databinding.ActivityPeerListBinding;
 
-import java.net.InetAddress;
 import java.util.ArrayList;
-import java.util.List;
+
 
 public class PeerListActivity extends AppCompatActivity {
 
@@ -28,7 +28,11 @@ public class PeerListActivity extends AppCompatActivity {
 
         binding.rvPeers.setLayoutManager(new LinearLayoutManager(this));
         peerAdapter = new PeerAdapter(new ArrayList<>(), peer -> {
+            long chatId = Chat.createChatWith(peer);
 
+            Intent i = new Intent(PeerListActivity.this, ChatActivity.class);
+            i.putExtra("chat_id", chatId);
+            startActivity(i);
         });
 
         binding.rvPeers.setAdapter(peerAdapter);

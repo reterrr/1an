@@ -6,6 +6,8 @@ import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
+import com.example.p2p.Model.NetworkInfo;
+import com.example.p2p.Model.User;
 import com.example.p2p.RequestHandlers.SendHandler;
 
 import java.io.BufferedReader;
@@ -31,8 +33,18 @@ public final class MyApp extends Application {
     public void onCreate() {
         super.onCreate();
 
+
         NetworkResourceManager.init(this);
         ObjectBox.init(this);
+
+        NetworkInfo networkInfo = new NetworkInfo();
+        networkInfo.ip = NetworkResourceManager.getNetworkInfo().deviceIp.toString();
+        networkInfo.port = 8888;
+
+        User currentUser = new User();
+        currentUser.username = "";
+        currentUser.networkInfo.setTarget(networkInfo);
+
 
 
 //                byte[] arr = new byte[2048];
