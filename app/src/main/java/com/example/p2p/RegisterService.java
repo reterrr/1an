@@ -104,6 +104,8 @@ public class RegisterService {
 
         if (!registerDto.password.equals(registerDto.confirmPassword)) {
             error.onError(dtoMap.get(RegisterDtoCode.CONFIRM_NOT_MATCH));
+
+            return;
         }
 
         error.onValid(registerDto);

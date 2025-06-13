@@ -17,20 +17,15 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.example.p2p.Model.User;
-import com.example.p2p.Model.NetworkInfo;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.List;
 
 import javax.jmdns.JmDNS;
 import javax.jmdns.ServiceEvent;
 import javax.jmdns.ServiceInfo;
 import javax.jmdns.ServiceListener;
 
-import io.objectbox.Box;
 
 public class DiscoveryService extends Service {
     private static final String CHANNEL_ID = "DISCOVERY_CHANNEL";
@@ -66,32 +61,13 @@ public class DiscoveryService extends Service {
             return;
         }
 
-//        Box<User> userBox = ObjectBox.get().boxFor(User.class);
-//        Box<NetworkInfo> netBox = ObjectBox.get().boxFor(NetworkInfo.class);
-//
-//        List<User> users = userBox.query(
-//                        User_.username.equal(nickname)
-//                )
-//                .build()
-//                .find();
-//
-//        for (User user : users) {
-//            NetworkInfo netInfo = user.networkInfo.getTarget();
-//            if (netInfo != null && ip.equals(netInfo.ip) && port == netInfo.port) {
-//                netBox.remove(netInfo.id);
-//                userBox.remove(user.id);
-//                Log.d(DiscoveryService.class.getSimpleName(), "Removed peer from DB: " + nickname);
-//                return;
-//            }
-//        }
-//
-//        try {
-//            PeerRepository.getInstance().removePeer(new Peer(nickname, InetAddress.getByName(ip), (int) port));
-//        } catch (UnknownHostException e) {
-//            throw new RuntimeException(e);
-//        }
-//
-//        Log.d(DiscoveryService.class.getSimpleName(), "Peer not found in DB: " + nickname);
+        try {
+            Peer peer = new Peer(nickname, InetAddress.getByName(ip), (int) port);
+            if (PeerRepository.getInstance().getPeers().getValue().contains(peer))
+                PeerRepository.getInstance().getPeers().getValue().remove(peer);
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
@@ -105,33 +81,6 @@ public class DiscoveryService extends Service {
         String nickname = info.getName();
         String ip = info.getInetAddresses()[0].getHostAddress();
         long port = info.getPort();
-
-//        Box<User> userBox = ObjectBox.get().boxFor(User.class);
-//        Box<NetworkInfo> netInfoBox = ObjectBox.get().boxFor(NetworkInfo.class);
-//
-//        List<User> existingUsers = userBox.query(
-//                        User_.nickname.equal(nickname)
-//                )
-//                .build()
-//                .find();
-//
-//        for (User existing : existingUsers) {
-//            NetworkInfo ni = existing.networkInfo.getTarget();
-//            if (ni != null && ni.ip.equals(ip) && ni.port == port) {
-//                Log.d(DiscoveryService.class.getSimpleName(), "Peer already exists: " + nickname);
-//                return;
-//            }
-//        }
-
-//        NetworkInfo networkInfo = new NetworkInfo();
-//        networkInfo.ip = ip;
-//        networkInfo.port = port;
-//        netInfoBox.put(networkInfo);
-//
-//        User user = new User();
-//        user.nickname = nickname;
-//        user.networkInfo.setTarget(networkInfo);
-//        userBox.put(user);
 
         try {
             Peer peer = new Peer(nickname, InetAddress.getByName(ip), (int) port);

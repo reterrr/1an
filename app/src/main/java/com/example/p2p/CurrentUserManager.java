@@ -19,7 +19,7 @@ import io.objectbox.query.QueryBuilder;
 
 
 public final class CurrentUserManager {
-    private static CurrentUser user;
+    private static CurrentUser user; // TODO: 6/13/25 probably it is better to store User 
 
     public static CurrentUser getUser() {
         return user;
@@ -33,6 +33,7 @@ public final class CurrentUserManager {
     public static LoginCode login(@NonNull LoginDto loginDto) {
         Box<User> userBox = ObjectBox.get().boxFor(User.class);
         Box<CurrentUser> currentUserBox = ObjectBox.get().boxFor(CurrentUser.class);
+        Box<NetworkInfo> netInfoBox = ObjectBox.get().boxFor(NetworkInfo.class);
 
         User user = userBox.query()
                 .equal(User_.username, loginDto.username, QueryBuilder.StringOrder.CASE_SENSITIVE)
@@ -43,21 +44,34 @@ public final class CurrentUserManager {
             return LoginCode.NO_SUCH_USER;
         }
 
-        CurrentUser cu = currentUserBox.query()
-                .equal(CurrentUser_.userId, user.id)
+        QueryBuilder<CurrentUser> builder = currentUserBox.query();
+
+        builder.link(CurrentUser_.user).equal(User_.id, user.id);
+
+        CurrentUser cu = builder
                 .build()
                 .findFirst();
 
-        if (cu == null) {
+        if (cu == null || !BCrypt.checkpw(loginDto.password, cu.passwordHash)) {
             return LoginCode.INVALID_CREDENTIALS;
         }
 
-        if (!BCrypt.checkpw(loginDto.password, cu.passwordHash)) {
-            return LoginCode.INVALID_CREDENTIALS;
+        NetworkInfo deviceNet = NetworkResourceManager.getDeviceNetworkInfo();
+        NetworkInfo storedNet = user.networkInfo.getTarget();
+
+        boolean updated = false;
+        if (!deviceNet.equals(storedNet)) {
+            deviceNet.id = netInfoBox.put(deviceNet);
+            user.networkInfo.setTarget(deviceNet);
+            userBox.put(user);
+            updated = true;
+        }
+
+        if (updated) {
+            cu = currentUserBox.get(cu.id);
         }
 
         CurrentUserManager.user = cu;
-        var netinfo = cu.user.getTarget().networkInfo.getTarget();
 
         return LoginCode.SUCCESS;
     }

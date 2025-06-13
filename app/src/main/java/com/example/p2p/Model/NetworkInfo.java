@@ -10,4 +10,14 @@ public class NetworkInfo {
 
     public String ip;
     public long port;
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof NetworkInfo))
+            return false;
+
+        NetworkInfo info = (NetworkInfo) o;
+
+        return ip.equals(info.ip);
+    }
 }
