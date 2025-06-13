@@ -1,51 +1,43 @@
 package com.example.p2p;
 
 import android.app.Application;
-import android.os.Build;
-import android.util.Log;
+import android.content.Intent;
 
-import androidx.annotation.RequiresApi;
+import com.example.p2p.activity.LoginActivity;
 
-import com.example.p2p.Model.NetworkInfo;
-import com.example.p2p.Model.User;
-import com.example.p2p.RequestHandlers.SendHandler;
-
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-import javax.net.ssl.SSLException;
-
-import io.netty.handler.ssl.util.SelfSignedCertificate;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 
 public final class MyApp extends Application {
     private static final String TAG = "MyApp";
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     @Override
     public void onCreate() {
         super.onCreate();
 
-
         NetworkResourceManager.init(this);
         ObjectBox.init(this);
 
-        NetworkInfo networkInfo = new NetworkInfo();
-        networkInfo.ip = NetworkResourceManager.getNetworkInfo().deviceIp.toString();
-        networkInfo.port = 8888;
+//        try {
+//            SslContext context = SslContextBuilder
+//                    .forServer(
+//                            getAssets().open("cert_chain.pem"),
+//                            getAssets().open("end_entity.key")
+//                    )
+//                    .build();
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
 
-        User currentUser = new User();
-        currentUser.username = "";
-        currentUser.networkInfo.setTarget(networkInfo);
-
-
+//        NetworkInfo networkInfo = new NetworkInfo();
+//        networkInfo.ip = NetworkResourceManager.getNetworkInfo().deviceIp.toString();
+//        networkInfo.port = 8888;
+//
+//        User currentUser = new User();
+//        currentUser.username = "";
+//        currentUser.networkInfo.setTarget(networkInfo);
 
 //                byte[] arr = new byte[2048];
 //                certStream = getAssets().open("cert.pem");

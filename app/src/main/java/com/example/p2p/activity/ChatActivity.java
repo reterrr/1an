@@ -75,10 +75,6 @@ public class ChatActivity extends AppCompatActivity {
             return;
         }
 
-        // 3) Set up Toolbar
-        Toolbar toolbar = binding.toolbarInclude.chatToolbar;
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         // Populate toolbar views
         binding.toolbarInclude.ivAvatar
