@@ -31,7 +31,7 @@ public class RegisterActivity extends Activity {
             RegisterService.getInstance().validate(dto, new RegisterService.Validate() {
                 @Override
                 public void onValid(RegisterDto dto) {
-                    String message = RegisterService.getInstance().register(dto);
+                    String message = RegisterService.getInstance().register(dto, RegisterActivity.this);
                     Toast.makeText(RegisterActivity.this, message, Toast.LENGTH_SHORT).show();
                 }
 

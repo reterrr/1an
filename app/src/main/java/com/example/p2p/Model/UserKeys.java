@@ -12,6 +12,5 @@ public class UserKeys {
     public ToOne<User> user;
 
     public String publicKey;       // base64 or hex-encoded
-    public String privateKeyEnc;   // encrypted private key
     public String keyType;         // e.g., "X25519"
 }

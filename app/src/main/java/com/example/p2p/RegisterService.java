@@ -1,5 +1,7 @@
 package com.example.p2p;
 
+import android.content.Context;
+
 import androidx.annotation.NonNull;
 
 import com.example.p2p.Model.CurrentUser;
@@ -45,11 +47,11 @@ public class RegisterService {
         return instance;
     }
 
-    public String register(@NonNull RegisterDto dto) {
-        return map.get(registerBase(dto));
+    public String register(@NonNull RegisterDto dto, Context context) {
+        return map.get(registerBase(dto, context));
     }
 
-    private RegisterCode registerBase(@NonNull RegisterDto dto) {
+    private RegisterCode registerBase(@NonNull RegisterDto dto, Context context) {
         Box<User> userBox = ObjectBox.get().boxFor(User.class);
         Box<CurrentUser> currentUserBox = ObjectBox.get().boxFor(CurrentUser.class);
 
@@ -63,14 +65,24 @@ public class RegisterService {
             return RegisterCode.EXISTS;
         }
 
+
         String hashed = BCrypt.hashpw(dto.password, BCrypt.gensalt());
 
         NetworkInfo networkInfo = NetworkResourceManager.getDeviceNetworkInfo();
-        // FIXME: 6/10/25 network
+
         User newUser = new User();
         newUser.username = dto.username;
         newUser.networkInfo.setTarget(networkInfo);
-        userBox.put(newUser);
+        long userId = userBox.put(newUser);
+
+        newUser = userBox.get(userId);
+
+        E2ETool tool = E2ETool.make()
+                .user(newUser)
+                .context(context)
+                .build();
+
+        tool.makeAndStoreKeyPair();
 
         CurrentUser cu = new CurrentUser();
         cu.user.setTarget(newUser);

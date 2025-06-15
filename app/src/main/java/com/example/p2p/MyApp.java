@@ -2,16 +2,14 @@ package com.example.p2p;
 
 import android.app.Application;
 import android.content.Intent;
+import android.util.Log;
 
-import com.example.p2p.activity.LoginActivity;
+import com.google.crypto.tink.hybrid.HybridConfig;
 
-import java.io.IOException;
-
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
+import java.security.GeneralSecurityException;
 
 public final class MyApp extends Application {
-    private static final String TAG = "MyApp";
+    private static final String tag = "MyApp";
 
     @Override
     public void onCreate() {
@@ -19,6 +17,13 @@ public final class MyApp extends Application {
 
         NetworkResourceManager.init(this);
         ObjectBox.init(this);
+        try {
+            HybridConfig.register();
+        } catch (GeneralSecurityException e) {
+            Log.e(tag, "Unable to register google tink");
+
+            throw new RuntimeException(e);
+        }
 
 //        try {
 //            SslContext context = SslContextBuilder
@@ -30,6 +35,8 @@ public final class MyApp extends Application {
 //        } catch (IOException e) {
 //            throw new RuntimeException(e);
 //        }
+        Intent serverService = new Intent(this, ServerService.class);
+        startForegroundService(serverService);
 
 //        NetworkInfo networkInfo = new NetworkInfo();
 //        networkInfo.ip = NetworkResourceManager.getNetworkInfo().deviceIp.toString();
@@ -60,5 +67,6 @@ public final class MyApp extends Application {
     @Override
     public void onTerminate() {
         super.onTerminate();
+        stopService(new Intent(this, ServerService.class));
     }
 }
