@@ -57,8 +57,9 @@ dependencies {
     implementation(libs.jmdns)
     implementation(libs.objectbox)
     implementation(libs.lombok)
-    implementation(libs.signal)
+    //implementation(libs.signal)
     implementation(libs.bcrypt)
+    implementation(libs.tink.android)
 
     implementation(libs.jackson.databind)
     implementation(libs.jackson.core)
