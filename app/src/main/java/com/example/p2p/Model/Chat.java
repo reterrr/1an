@@ -8,12 +8,14 @@ import com.example.p2p.ObjectBox;
 import com.example.p2p.Peer;
 
 import java.util.Date;
+import java.util.UUID;
 
 import io.objectbox.Box;
 import io.objectbox.annotation.Convert;
 import io.objectbox.annotation.Entity;
 import io.objectbox.annotation.Id;
 
+import io.objectbox.annotation.Unique;
 import io.objectbox.query.QueryBuilder;
 import io.objectbox.relation.ToMany;
 
@@ -31,10 +33,15 @@ public class Chat {
         this.createdTimestamp = new Date();
     }
 
-    public static long createChatWith(Peer peer) {
+    public interface Action {
+        void onProvided(Chat chat);
+    }
+
+    public static void createChatWith(User user, Action action) {
         Box<Chat> chatBox = ObjectBox.get().boxFor(Chat.class);
         Box<User> userBox = ObjectBox.get().boxFor(User.class);
         Box<NetworkInfo> netBox = ObjectBox.get().boxFor(NetworkInfo.class);
+
         long currentUserId = CurrentUserManager.getUser().id;
         if (currentUserId < 0) {
             throw new IllegalStateException("No current user ID set");
@@ -86,9 +93,9 @@ public class Chat {
                     .equal(User_.id, otherId);
         }
 
-        long existingId = q.build().findFirstId();
-        if (existingId != 0) {
-            return existingId;
+        Chat existingChat = q.build().findFirst();
+        if (existingChat != null) {
+
         }
 
         Chat newChat = new Chat();
@@ -103,8 +110,6 @@ public class Chat {
         }
 
         chatBox.put(newChat);
-
-        return newChat.id;
     }
 
     public long createGroupWith(Peer[] peer) {

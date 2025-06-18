@@ -31,8 +31,12 @@ public class LoginService {
     public void login(@NonNull LoginDto dto, Login login) {
         LoginCode code = CurrentUserManager.login(dto);
 
-        if (code == LoginCode.SUCCESS)
+        if (code.value == LoginCode.SUCCESS.value) {
             login.onSuccess(map.get(code));
+
+            return;
+        }
+
 
         login.onError(map.get(code));
     }

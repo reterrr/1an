@@ -6,6 +6,7 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.example.p2p.AuthPeerRepository;
 import com.example.p2p.Model.Chat;
 import com.example.p2p.PeerRepository;
 import com.example.p2p.activity.adapter.PeerAdapter;
@@ -13,11 +14,10 @@ import com.example.p2p.databinding.ActivityPeerListBinding;
 
 import java.util.ArrayList;
 
-
 public class PeerListActivity extends AppCompatActivity {
-
     private PeerAdapter peerAdapter;
     private ActivityPeerListBinding binding;
+    private final String tag = PeerListActivity.class.toString();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,19 +26,27 @@ public class PeerListActivity extends AppCompatActivity {
         binding = ActivityPeerListBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        binding.rvPeers.setLayoutManager(new LinearLayoutManager(this));
-        peerAdapter = new PeerAdapter(new ArrayList<>(), peer -> {
-            long chatId = Chat.createChatWith(peer);
+        PeerRepository.setObserver(this);
 
-            Intent i = new Intent(PeerListActivity.this, ChatActivity.class);
-            i.putExtra("chat_id", chatId);
-            startActivity(i);
-        });
+        binding.rvPeers.setLayoutManager(new LinearLayoutManager(this));
+        peerAdapter = new PeerAdapter(new ArrayList<>(), user -> {
+            Chat.createChatWith(user, chat -> {
+                Intent i = new Intent(PeerListActivity.this, ChatActivity.class);
+                i.putExtra("chat_id", chat.id);
+                startActivity(i);
+            });
+        }
+//                Chat.createChatWith(peer, chat -> {
+//                    Intent i = new Intent(PeerListActivity.this, ChatActivity.class);
+//                    i.putExtra("chat_id", chat.id);
+//                    startActivity(i);
+//                })
+        );
 
         binding.rvPeers.setAdapter(peerAdapter);
 
-        PeerRepository.getInstance().getPeers().observe(this, updated -> {
-            peerAdapter.updateList(updated);
-        });
+        AuthPeerRepository.getInstance().getUsers().observe(this, updated ->
+                peerAdapter.updateList(updated)
+        );
     }
 }

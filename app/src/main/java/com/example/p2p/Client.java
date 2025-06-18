@@ -21,9 +21,9 @@ public class Client {
         this.out = new DataOutputStream(socket.getOutputStream());
     }
 
-    public static Client getInstance(InetAddress address, int port) {
+    public static Client getInstance(InetAddress address, long port) {
         try {
-            Socket socket = new Socket(address, port);
+            Socket socket = new Socket(address, (int) port);
 
             return new Client(socket);
         } catch (IOException e) {
@@ -37,7 +37,7 @@ public class Client {
         byte[] data = request.toBytes();
 
         try {
-            out.writeInt(data.length);
+            //out.writeInt(data.length);
             out.write(data);
             out.flush();
         } catch (IOException e) {

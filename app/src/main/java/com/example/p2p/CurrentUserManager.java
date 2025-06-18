@@ -1,6 +1,11 @@
 package com.example.p2p;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+
 import androidx.annotation.NonNull;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.p2p.Model.CurrentUser;
 import com.example.p2p.Model.CurrentUser_;
@@ -19,9 +24,9 @@ import io.objectbox.query.QueryBuilder;
 
 
 public final class CurrentUserManager {
-    private static CurrentUser user; // TODO: 6/13/25 probably it is better to store User 
+    private static CurrentUser user; // TODO: 6/13/25 probably it is better to store User
 
-    public static CurrentUser getUser() {
+    public synchronized static CurrentUser getUser() {
         return user;
     }
 
@@ -74,6 +79,10 @@ public final class CurrentUserManager {
         CurrentUserManager.user = cu;
 
         return LoginCode.SUCCESS;
+    }
+
+    public static void release() {
+        user = (user != null) ? null : user;
     }
 
 }

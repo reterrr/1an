@@ -6,26 +6,26 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.p2p.Peer;
+import com.example.p2p.Model.User;
 import com.example.p2p.databinding.ItemPeerBinding;
 
 import java.util.List;
 
 public class PeerAdapter extends RecyclerView.Adapter<PeerAdapter.PeerViewHolder> {
 
-    private final List<Peer> peerList;
+    private final List<User> peerList;
     private final OnPeerClickListener onPeerClickListener;
 
     public interface OnPeerClickListener {
-        void onClick(Peer peer);
+        void onClick(User user);
     }
 
-    public PeerAdapter(List<Peer> initialList, OnPeerClickListener listener) {
+    public PeerAdapter(List<User> initialList, OnPeerClickListener listener) {
         this.peerList = initialList;
         this.onPeerClickListener = listener;
     }
 
-    public void updateList(List<Peer> newList) {
+    public void updateList(List<User> newList) {
         peerList.clear();
         peerList.addAll(newList);
         notifyDataSetChanged(); // For simplicity, consider DiffUtil later
@@ -42,8 +42,8 @@ public class PeerAdapter extends RecyclerView.Adapter<PeerAdapter.PeerViewHolder
 
     @Override
     public void onBindViewHolder(@NonNull PeerViewHolder holder, int position) {
-        Peer peer = peerList.get(position);
-        holder.bind(peer);
+        User user = peerList.get(position);
+        holder.bind(user);
     }
 
     @Override
@@ -59,11 +59,11 @@ public class PeerAdapter extends RecyclerView.Adapter<PeerAdapter.PeerViewHolder
             this.binding = binding;
         }
 
-        void bind(Peer peer) {
-            binding.tvUsername.setText(peer.userName);
-            binding.tvIp.setText(peer.ip.getHostAddress());
-            binding.tvPort.setText(String.valueOf(peer.port));
-            binding.getRoot().setOnClickListener(v -> onPeerClickListener.onClick(peer));
+        void bind(User user) {
+            binding.tvUsername.setText(user.username.replaceAll("(@[A-z-0-9.]+)*", ""));
+            binding.tvIp.setText(user.networkInfo.getTarget().ip);
+            binding.tvPort.setText(String.valueOf(user.networkInfo.getTarget().port));
+            binding.getRoot().setOnClickListener(v -> onPeerClickListener.onClick(user));
         }
     }
 }

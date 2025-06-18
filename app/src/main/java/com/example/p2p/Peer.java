@@ -2,7 +2,7 @@ package com.example.p2p;
 
 import java.net.InetAddress;
 
-public final class Peer {
+public final class Peer implements Visitable<Peer> {
     public final String userName;
     public final InetAddress ip;
     public final int port;
@@ -11,6 +11,11 @@ public final class Peer {
         this.userName = userName;
         this.ip = ip;
         this.port = port;
+    }
+
+    @Override
+    public void accept(Visitor<Peer> v) {
+        v.visit(this);
     }
 
     @Override

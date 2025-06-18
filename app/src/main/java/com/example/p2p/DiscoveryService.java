@@ -17,6 +17,11 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.example.p2p.Model.CurrentUser;
+import com.example.p2p.Model.NetworkInfo;
+import com.example.p2p.Model.User;
+import com.example.p2p.Request.Sender;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -53,23 +58,16 @@ public class DiscoveryService extends Service {
 
     private void removePeer(ServiceInfo info) {
         String nickname = info.getName();
-        String ip = info.getInetAddresses().length > 0 ? info.getInetAddresses()[0].getHostAddress() : null;
-        long port = info.getPort();
+        Peer p = PeerRepository.getInstance()
+                .getPeers()
+                .getValue()
+                .stream()
+                .filter(peer ->
+                        peer.userName.equals(nickname)
+                ).findFirst().get();
 
-        if (ip == null) {
-            Log.w(DiscoveryService.class.getSimpleName(), "Cannot remove peer: No IP address found.");
-            return;
-        }
-
-        try {
-            Peer peer = new Peer(nickname, InetAddress.getByName(ip), (int) port);
-            if (PeerRepository.getInstance().getPeers().getValue().contains(peer))
-                PeerRepository.getInstance().getPeers().getValue().remove(peer);
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);
-        }
+        PeerRepository.getInstance().removePeer(p);
     }
-
 
     private void addPeer(ServiceInfo info) {
         if (info.getInetAddresses().length == 0) {
@@ -84,8 +82,7 @@ public class DiscoveryService extends Service {
 
         try {
             Peer peer = new Peer(nickname, InetAddress.getByName(ip), (int) port);
-            if (!PeerRepository.getInstance().getPeers().getValue().contains(peer))
-                PeerRepository.getInstance().addPeer(peer);
+            PeerRepository.getInstance().addPeer(peer);
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);
         }
@@ -138,33 +135,38 @@ public class DiscoveryService extends Service {
     }
 
     private void registerMdns(int port) {
-        try {
-            InetAddress deviceIp = NetworkResourceManager.getNetworkInfo().deviceIp;
-            if (deviceIp == null) {
-                Log.e(TAG, "Device IP is null");
+        new Thread(() -> {
+            try {
+                CurrentUser cuser = CurrentUserManager.getUser();
+                User user = cuser.user.getTarget();
+                NetworkInfo info = user.networkInfo.getTarget();
+
+                InetAddress deviceIp = InetAddress.getByName(info.ip);
+
+                WifiManager wifi = NetworkResourceManager.getWifiManager();
+
+                lock = wifi.createMulticastLock("JmDNS");
+                lock.setReferenceCounted(true);
+                lock.acquire();
+
+                jmDNS = JmDNS.create(deviceIp, Build.MODEL);
+
+                ServiceInfo serviceInfo = ServiceInfo.create(
+                        SERVICE_TYPE,
+                        Sender.username2post(user.username),
+                        port,
+                        "P2P Chat Service"
+                );
+
+                jmDNS.registerService(serviceInfo);
+                jmDNS.addServiceListener(SERVICE_TYPE, listener);
+
+                Log.i(TAG, "mDNS service registered on port " + port);
+            } catch (IOException e) {
+                Log.e(TAG, "Failed to register mDNS", e);
                 stopSelf();
-                return;
             }
-            WifiManager wifi = NetworkResourceManager.getWifiManager();
-            lock = wifi.createMulticastLock("JmDNS");
-            lock.setReferenceCounted(true);
-            lock.acquire();
-            jmDNS = JmDNS.create(deviceIp, Build.MODEL);
-
-            ServiceInfo serviceInfo = ServiceInfo.create(
-                    SERVICE_TYPE,
-                    "username_@" + Build.MODEL,
-                    port,
-                    "P2P Chat Service"
-            );
-            jmDNS.registerService(serviceInfo);
-            jmDNS.addServiceListener(SERVICE_TYPE, listener);
-
-            Log.i(TAG, "mDNS service registered on port " + port);
-        } catch (IOException e) {
-            Log.e(TAG, "Failed to register mDNS", e);
-            stopSelf();
-        }
+        }).start();
     }
 
     @Override
@@ -181,6 +183,7 @@ public class DiscoveryService extends Service {
         if (lock != null && lock.isHeld()) {
             lock.release();
         }
+
         LocalBroadcastManager.getInstance(this).unregisterReceiver(portReceiver);
     }
 

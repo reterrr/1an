@@ -7,6 +7,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.example.p2p.MessageDto;
+import com.example.p2p.MessageService;
 import com.example.p2p.Model.Chat;
 import com.example.p2p.CurrentUserManager;
 import com.example.p2p.Model.Message;
@@ -32,18 +34,17 @@ public class ChatActivity extends AppCompatActivity {
     private User otherUser;
     private long currentUserId;
 
+    private MessageService service;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityChatBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // 0) Determine current user ID however you store it
-        //    (could be in SharedPreferences or a singleton)
         currentUserId = CurrentUserManager.getUser().id;/* e.g. Prefs.get().getLong("currentUserId", -1) */
         ;
 
-        // 1) Load Chat by ID
         long chatId = getIntent().getLongExtra("chat_id", -1L);
         if (chatId < 0) {
             Toast.makeText(this, "Chat not specified", Toast.LENGTH_SHORT).show();
@@ -61,7 +62,6 @@ public class ChatActivity extends AppCompatActivity {
             return;
         }
 
-        // 2) Determine the “other” user from the participants list
         for (User u : chat.participants) {
             if (u.id != currentUserId) {
                 otherUser = u;
@@ -76,7 +76,6 @@ public class ChatActivity extends AppCompatActivity {
         }
 
 
-        // Populate toolbar views
         binding.toolbarInclude.ivAvatar
                 .setContentDescription(otherUser.username + " avatar");
 
@@ -88,24 +87,26 @@ public class ChatActivity extends AppCompatActivity {
         binding.toolbarInclude.tvChatIp
                 .setText(ipAndPort);
 
-        // 4) RecyclerView + Adapter
+
+        binding.btnSend.setOnClickListener(v -> {
+            MessageDto dto = new MessageDto(binding.etMessage.getText().toString());
+        });
+
         adapter = new ChatAdapter();
         binding.rvMessages.setLayoutManager(new LinearLayoutManager(this));
         binding.rvMessages.setAdapter(adapter);
 
-        // 5) Load & display messages
         loadMessages();
     }
 
     private void loadMessages() {
-        // Query messages in this chat, sort by timestamp descending
         Query<Message> q = messageBox.query()
                 .equal(Message_.chatId, chat.id)
                 .orderDesc(Message_.createdTimestamp)
                 .build();
 
         List<Message> list = q.find();
-        Collections.reverse(list);   // oldest at top
+
         adapter.setMessages(list);
 
         if (!list.isEmpty()) {

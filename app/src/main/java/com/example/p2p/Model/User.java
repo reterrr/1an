@@ -1,5 +1,9 @@
 package com.example.p2p.Model;
 
+import androidx.annotation.Nullable;
+
+import com.example.p2p.Peer;
+
 import java.util.Date;
 
 import io.objectbox.annotation.Entity;
@@ -23,5 +27,26 @@ public class User {
 
     public User() {
         this.createdAt = new Date();
+    }
+
+    public User(Peer peer) {
+        this.username = peer.userName;
+
+        NetworkInfo info = new NetworkInfo();
+        info.ip = peer.ip.toString();
+        info.port = peer.port;
+
+        this.networkInfo.setTarget(info);
+        this.createdAt = new Date();
+    }
+
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        if (!(obj instanceof User)) return false;
+
+        User user = (User) obj;
+
+        return username.equals(user.username) ||
+                networkInfo.equals(user.networkInfo);
     }
 }

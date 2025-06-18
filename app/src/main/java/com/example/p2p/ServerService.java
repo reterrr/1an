@@ -12,6 +12,8 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.example.p2p.RequestHandlers.AuthRequestHandler;
+import com.example.p2p.RequestHandlers.AuthResponseHandler;
 import com.example.p2p.RequestHandlers.SendHandler;
 
 import javax.net.ssl.SSLException;
@@ -19,6 +21,10 @@ import javax.net.ssl.SSLException;
 public class ServerService extends Service {
     private static final String TAG = ServerService.class.toString();
     private static final String CHANNEL_ID = "SERVER_CHANNEL";
+
+    // Hold onto these so we can shut them down in onDestroy()
+    private Server server;
+    private Thread serverThread;
 
     @Nullable
     @Override
@@ -32,10 +38,11 @@ public class ServerService extends Service {
         createNotificationChannel();
 
         Notification notif = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("P2P Discovery Running")
+                .setContentTitle("P2P Server Running")
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .build();
 
+        // startForeground with notification so the service isn't killed
         startForeground(102, notif);
     }
 
@@ -45,34 +52,61 @@ public class ServerService extends Service {
                 "Server Service",
                 NotificationManager.IMPORTANCE_LOW
         );
-
-        getSystemService(NotificationManager.class)
-                .createNotificationChannel(chan);
+        getSystemService(NotificationManager.class).createNotificationChannel(chan);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Server server = new Server(8888, boundPort -> {
+        // Initialize server and callback for port-ready broadcast
+        server = new Server(8888, boundPort -> {
             ServerInfo.setServerPort(boundPort);
-
             Intent ready = new Intent("com.example.p2p.ACTION_PORT_READY");
             ready.putExtra("port", boundPort);
-            LocalBroadcastManager.getInstance(ServerService.this)
-                    .sendBroadcast(ready);
+            LocalBroadcastManager.getInstance(this).sendBroadcast(ready);
         });
 
-        server.configMapping(r -> r.register("/messages/send", new SendHandler()));
+        server.configMapping(r -> {
+            r.register("/messages/send", new SendHandler());
+            r.register("/auth/request", new AuthRequestHandler());
+            r.register("/auth/response", new AuthResponseHandler());
+        });
 
-        new Thread(() -> {
+        // Run server on its own thread
+        serverThread = new Thread(() -> {
             try {
                 server.run();
-            } catch (SSLException |
-                     InterruptedException e) {
-                Log.e(TAG, "Failed to start server", e);
-                throw new RuntimeException("Failed to start server", e);
+            } catch (SSLException | InterruptedException e) {
+                Log.e(TAG, "Server run failed", e);
             }
-        }).start();
+        }, "P2P-Server-Thread");
+        serverThread.start();
 
         return START_STICKY;
+    }
+
+    @Override
+    public void onDestroy() {
+        // 1) Stop foreground and remove notification
+        stopForeground(true);
+
+        // 2) Shut down the server (you’ll need a stop/close method on your Server)
+        if (server != null) {
+            try {
+                server.shutdown();      // or server.close(), depending on your API
+            } catch (Exception e) {
+                Log.w(TAG, "Error stopping server", e);
+            }
+        }
+
+        // 3) Interrupt and join the thread
+        if (serverThread != null && serverThread.isAlive()) {
+            serverThread.interrupt();
+            try {
+                serverThread.join(1000);
+            } catch (InterruptedException ignored) {
+            }
+        }
+
+        super.onDestroy();
     }
 }

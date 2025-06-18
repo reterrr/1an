@@ -1,14 +1,22 @@
 package com.example.p2p.activity;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.example.p2p.AuthService;
+import com.example.p2p.CurrentUserManager;
+import com.example.p2p.DiscoveryService;
 import com.example.p2p.LoginService;
+import com.example.p2p.NetworkResourceManager;
+import com.example.p2p.ServerService;
 import com.example.p2p.auth.LoginDto;
 import com.example.p2p.databinding.ActivityLoginBinding;
 
@@ -45,6 +53,24 @@ public class LoginActivity extends Activity {
                 @Override
                 public void onSuccess(String message) {
                     Toast.makeText(LoginActivity.this, message, Toast.LENGTH_SHORT).show();
+
+                    Intent discovery = new Intent(LoginActivity.this.getApplicationContext(), DiscoveryService.class);
+                    startForegroundService(discovery);
+
+                    Intent serverService = new Intent(LoginActivity.this.getApplicationContext(), ServerService.class);
+                    startForegroundService(serverService);
+
+                    new BroadcastReceiver() {
+                        @Override
+                        public void onReceive(Context context, Intent intent) {
+                            NetworkResourceManager.getDeviceNetworkInfo().port = intent.getIntExtra("port", 0);
+                            CurrentUserManager.getUser().user.getTarget().networkInfo.getTarget().port = intent.getIntExtra("port", 0);
+
+                            LocalBroadcastManager.getInstance(context)
+                                    .unregisterReceiver(this);
+                        }
+                    };
+
                     startActivity(new Intent(LoginActivity.this, PeerListActivity.class));
                 }
 
@@ -59,5 +85,12 @@ public class LoginActivity extends Activity {
             Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
             startActivity(intent);
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+
     }
 }

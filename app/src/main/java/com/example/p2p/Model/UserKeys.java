@@ -10,7 +10,7 @@ public class UserKeys {
     public long id;
 
     public ToOne<User> user;
+    public String fingerPrint;
 
-    public String publicKey;       // base64 or hex-encoded
-    public String keyType;         // e.g., "X25519"
+    public String publicKey;       // base64 or hex-encode
 }

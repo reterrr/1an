@@ -65,7 +65,6 @@ public class RegisterService {
             return RegisterCode.EXISTS;
         }
 
-
         String hashed = BCrypt.hashpw(dto.password, BCrypt.gensalt());
 
         NetworkInfo networkInfo = NetworkResourceManager.getDeviceNetworkInfo();

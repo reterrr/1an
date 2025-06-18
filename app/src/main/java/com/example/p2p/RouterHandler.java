@@ -1,5 +1,6 @@
 package com.example.p2p;
 
+import com.example.p2p.Request.AuthRequest;
 import com.example.p2p.Request.Request;
 import com.example.p2p.RequestHandlers.RequestHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,9 +8,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
+@ChannelHandler.Sharable
 public class RouterHandler extends SimpleChannelInboundHandler<Request> {
     private final Map<String, RequestHandler<?>> handlers = new ConcurrentHashMap<>();
     private final ObjectMapper mapper = new ObjectMapper();
@@ -34,7 +37,8 @@ public class RouterHandler extends SimpleChannelInboundHandler<Request> {
 
         // Execute handler logic. It may call msg.reply(...) internally.
         try {
-            Object body = mapper.readValue(request.getPayload(), h.getRequestType());
+            byte[] payload = request.getPayload();
+            Object body = mapper.readValue(payload, h.getRequestType());
 
             ((RequestHandler<Object>) h).handle(body);
         } catch (Exception e) {
