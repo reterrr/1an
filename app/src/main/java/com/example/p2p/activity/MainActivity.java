@@ -50,10 +50,8 @@ public class MainActivity extends AppCompatActivity {
 
             throw new RuntimeException(e);
         }
-
-        //cm.registerNetworkCallback(request, networkCallback);
-        startActivity(new Intent(this, LoginActivity.class));
-
+        cm.registerNetworkCallback(request, networkCallback);
+        //startActivity(new Intent(this, LoginActivity.class));
     }
 
     @Override

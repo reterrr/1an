@@ -6,6 +6,8 @@ public class SyncHandler implements RequestHandler<SyncChatRequest> {
     @Override
     public void handle(SyncChatRequest request) throws Exception {
 
+
+        //ChatService.getInstance().sync();
     }
 
     @Override

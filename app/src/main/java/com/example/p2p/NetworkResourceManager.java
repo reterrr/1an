@@ -1,6 +1,5 @@
 package com.example.p2p;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
@@ -9,8 +8,8 @@ import android.net.wifi.WifiManager;
 import android.net.DhcpInfo;
 
 import androidx.annotation.NonNull;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.example.p2p.activity.LoginActivity;
 import com.example.p2p.activity.NoWifiActivity;
 
 public final class NetworkResourceManager {
@@ -26,7 +25,7 @@ public final class NetworkResourceManager {
             super.onAvailable(network);
 
             updateNetworkResources();
-            //context.startActivity(new Intent(context, LoginActivity.class));
+            context.startActivity(new Intent(context, LoginActivity.class));
         }
 
         @Override
@@ -41,11 +40,11 @@ public final class NetworkResourceManager {
             super.onUnavailable();
 
             Intent intent = new Intent(context, NoWifiActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-                    | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
             context.stopService(new Intent(context, ServerService.class));
             context.stopService(new Intent(context, DiscoveryService.class));
+            PeerRepository.release();
+            AuthPeerRepository.release();
 
             context.startActivity(intent);
         }

@@ -24,6 +24,8 @@ public class Chat {
     @Id
     public long id;
     public String title;
+    @Unique
+    public String sync;
     public ToMany<User> participants;
     @Convert(converter = ChatTypeConverter.class, dbType = Integer.class)
     public ChatType chatType;
@@ -47,9 +49,10 @@ public class Chat {
             throw new IllegalStateException("No current user ID set");
         }
 
-        String nick = peer.userName;
-        String ip = peer.ip.getHostAddress();
-        int port = peer.port;
+        String nick = user.username;
+        NetworkInfo info = user.networkInfo.getTarget();
+        String ip = info.ip;
+        long port = info.port;
 
         QueryBuilder<User> builder = userBox.query(
                 User_.username.equal(nick)
