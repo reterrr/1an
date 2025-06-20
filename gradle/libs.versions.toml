@@ -15,6 +15,7 @@ nettyAll = "4.1.99.Final"
 objectbox = "4.3.0"
 signal = "2.8.1"
 bcrypt = "0.4"
+tinkAndroid = "1.7.0"
 
 [libraries]
 jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jacksonDatabind" }
@@ -37,6 +38,7 @@ nc = { module = "io.netty:netty-codec", version.ref = "nettyAll" }
 objectbox = { module = "io.objectbox:objectbox-android", version.ref = "objectbox" }
 signal = { module = "org.whispersystems:signal-protocol-java", version.ref = "signal" }
 bcrypt = { module = "org.mindrot:jbcrypt", version.ref = "bcrypt" }
+tink-android = { module = "com.google.crypto.tink:tink-android", version.ref = "tinkAndroid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
