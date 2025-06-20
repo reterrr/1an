@@ -14,7 +14,6 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 
 public final class Server {
@@ -24,7 +23,8 @@ public final class Server {
 
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
-    private ChannelFuture future;
+    private ChannelFuture outerFuture;
+    private ChannelFuture localFuture;
 
     public Server(int port, PortListener portListener) {
         this.port = port;
@@ -41,7 +41,7 @@ public final class Server {
     }
 
     public int getPort() {
-        return ((InetSocketAddress) future.channel().localAddress()).getPort();
+        return ((InetSocketAddress) outerFuture.channel().localAddress()).getPort();
     }
 
     public void run() throws SSLException, InterruptedException {
@@ -57,8 +57,6 @@ public final class Server {
                         @Override
                         protected void initChannel(SocketChannel ch) {
                             ch.pipeline().addLast(
-//                                    new LengthFieldBasedFrameDecoder(
-//                                            10 * 1024 * 1024, 0, 4, 0, 4),
                                     new RequestDecoder(),
                                     routerHandler,
                                     new LengthFieldPrepender(4)
@@ -66,9 +64,12 @@ public final class Server {
                         }
                     });
 
-            future = b.bind(port).sync();
+            outerFuture = b.bind(port).sync();
+            localFuture = b.bind(new InetSocketAddress("127.0.0.1", port));
+
             listener.onPortReady(getPort());
-            future.channel().closeFuture().sync();
+            outerFuture.channel().closeFuture().sync();
+            localFuture.channel().closeFuture().sync();
         } finally {
             shutdownEventLoops();
         }
@@ -80,9 +81,13 @@ public final class Server {
      * event loops.
      */
     public void shutdown() {
-        if (future != null) {
-            future.channel().close();
+        if (outerFuture != null) {
+            outerFuture.channel().close();
         }
+        if (localFuture != null) {
+            localFuture.channel().close();
+        }
+
         shutdownEventLoops();
         routerHandler = null;
     }
