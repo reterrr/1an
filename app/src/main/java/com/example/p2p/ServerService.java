@@ -22,7 +22,6 @@ public class ServerService extends Service {
     private static final String TAG = ServerService.class.toString();
     private static final String CHANNEL_ID = "SERVER_CHANNEL";
 
-    // Hold onto these so we can shut them down in onDestroy()
     private Server server;
     private Thread serverThread;
 
@@ -42,7 +41,6 @@ public class ServerService extends Service {
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .build();
 
-        // startForeground with notification so the service isn't killed
         startForeground(102, notif);
     }
 
@@ -57,7 +55,6 @@ public class ServerService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // Initialize server and callback for port-ready broadcast
         server = new Server(8888, boundPort -> {
             ServerInfo.setServerPort(boundPort);
             Intent ready = new Intent("com.example.p2p.ACTION_PORT_READY");
@@ -67,11 +64,14 @@ public class ServerService extends Service {
 
         server.configMapping(r -> {
             r.register("/messages/send", new SendHandler());
+
             r.register("/auth/request", new AuthRequestHandler());
             r.register("/auth/response", new AuthResponseHandler());
+
+//            r.register("/chat/sync/request", );
+//            r.register("/chat/sync/response", );
         });
 
-        // Run server on its own thread
         serverThread = new Thread(() -> {
             try {
                 server.run();
@@ -86,19 +86,16 @@ public class ServerService extends Service {
 
     @Override
     public void onDestroy() {
-        // 1) Stop foreground and remove notification
         stopForeground(true);
 
-        // 2) Shut down the server (you’ll need a stop/close method on your Server)
         if (server != null) {
             try {
-                server.shutdown();      // or server.close(), depending on your API
+                server.shutdown();
             } catch (Exception e) {
                 Log.w(TAG, "Error stopping server", e);
             }
         }
 
-        // 3) Interrupt and join the thread
         if (serverThread != null && serverThread.isAlive()) {
             serverThread.interrupt();
             try {
