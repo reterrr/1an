@@ -55,9 +55,10 @@ public class LoginActivity extends Activity {
                     Toast.makeText(LoginActivity.this, message, Toast.LENGTH_SHORT).show();
 
                     Intent discovery = new Intent(LoginActivity.this.getApplicationContext(), DiscoveryService.class);
-                    startForegroundService(discovery);
-
                     Intent serverService = new Intent(LoginActivity.this.getApplicationContext(), ServerService.class);
+                    stopService(discovery);
+                    stopService(serverService);
+                    startForegroundService(discovery);
                     startForegroundService(serverService);
 
                     new BroadcastReceiver() {
@@ -91,6 +92,11 @@ public class LoginActivity extends Activity {
     protected void onDestroy() {
         super.onDestroy();
 
+
+    }
+
+    @Override
+    public void onBackPressed() {
 
     }
 }

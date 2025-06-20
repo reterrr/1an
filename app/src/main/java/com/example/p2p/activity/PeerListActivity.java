@@ -30,11 +30,11 @@ public class PeerListActivity extends AppCompatActivity {
 
         binding.rvPeers.setLayoutManager(new LinearLayoutManager(this));
         peerAdapter = new PeerAdapter(new ArrayList<>(), user -> {
-            Chat.createChatWith(user, chat -> {
-                Intent i = new Intent(PeerListActivity.this, ChatActivity.class);
-                i.putExtra("chat_id", chat.id);
-                startActivity(i);
-            });
+//            Chat.createChatWith(user, chat -> {
+//                Intent i = new Intent(PeerListActivity.this, ChatActivity.class);
+//                i.putExtra("chat_id", chat.id);
+//                startActivity(i);
+//            });
         }
 //                Chat.createChatWith(peer, chat -> {
 //                    Intent i = new Intent(PeerListActivity.this, ChatActivity.class);
@@ -48,5 +48,12 @@ public class PeerListActivity extends AppCompatActivity {
         AuthPeerRepository.getInstance().getUsers().observe(this, updated ->
                 peerAdapter.updateList(updated)
         );
+    }
+
+    @Override
+    public void onBackPressed() {
+        AuthPeerRepository.release();
+        PeerRepository.release();
+        super.onBackPressed();
     }
 }

@@ -46,4 +46,9 @@ public class RegisterActivity extends Activity {
             startActivity(new Intent(this, LoginActivity.class));
         });
     }
+
+    @Override
+    public void onBackPressed() {
+
+    }
 }
