@@ -80,6 +80,12 @@ public class DiscoveryService extends Service {
         String ip = info.getInetAddresses()[0].getHostAddress();
         long port = info.getPort();
 
+        User cuser = CurrentUserManager.getUser().user.getTarget();
+        NetworkInfo ninfo = cuser.networkInfo.getTarget();
+
+        if (nickname.equals(Sender.username2post(cuser.username)) && ip.equals(ninfo.ip) && port == ninfo.port)
+            return;
+
         try {
             Peer peer = new Peer(nickname, InetAddress.getByName(ip), (int) port);
             PeerRepository.getInstance().addPeer(peer);
