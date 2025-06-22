@@ -16,6 +16,7 @@ import com.example.p2p.CurrentUserManager;
 import com.example.p2p.DiscoveryService;
 import com.example.p2p.LoginService;
 import com.example.p2p.NetworkResourceManager;
+import com.example.p2p.ObjectBox;
 import com.example.p2p.ServerService;
 import com.example.p2p.auth.LoginDto;
 import com.example.p2p.databinding.ActivityLoginBinding;
@@ -56,8 +57,7 @@ public class LoginActivity extends Activity {
 
                     Intent discovery = new Intent(LoginActivity.this.getApplicationContext(), DiscoveryService.class);
                     Intent serverService = new Intent(LoginActivity.this.getApplicationContext(), ServerService.class);
-                    stopService(discovery);
-                    stopService(serverService);
+
                     startForegroundService(discovery);
                     startForegroundService(serverService);
 

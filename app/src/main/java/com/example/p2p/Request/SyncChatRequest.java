@@ -10,17 +10,12 @@ public class SyncChatRequest {
     @JsonProperty("sender")
     public Sender sender;
 
-    @JsonProperty("finger_print")
-    public String fingerPrint;
-
     @JsonCreator
     public SyncChatRequest(
             @JsonProperty("hash") String hash,
-            @JsonProperty("sender") Sender sender,
-            @JsonProperty("finger_print") String fingerPrint
+            @JsonProperty("sender") Sender sender
     ) {
         this.sender = sender;
         this.hash = hash;
-        this.fingerPrint = fingerPrint;
     }
 }

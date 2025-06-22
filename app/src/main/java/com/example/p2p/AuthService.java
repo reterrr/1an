@@ -6,6 +6,7 @@ import com.example.p2p.Model.UserKeys;
 import com.example.p2p.Model.UserKeys_;
 import com.example.p2p.Model.User_;
 import com.example.p2p.Request.AuthRequest;
+import com.example.p2p.Request.Sender;
 
 import io.objectbox.Box;
 import io.objectbox.query.Query;
@@ -44,7 +45,7 @@ public class AuthService {
             UserKeys userKeys = new UserKeys();
             User user = new User();
 
-            info.ip = request.sender.address.toString();
+            info.ip = request.sender.address.getHostAddress();
             info.port = request.sender.port;
 
             long infoId = networkInfoBox.put(info);
@@ -79,6 +80,35 @@ public class AuthService {
             h.onError(userName);
         }
 
+    }
+
+    public void authSender(Sender sender, Handler h) {
+        Box<User> userBox = ObjectBox.get().boxFor(User.class);
+        User user = userBox.query()
+                .equal(User_.username, sender.username, QueryBuilder.StringOrder.CASE_SENSITIVE)
+                .build()
+                .findFirst();
+
+        if (user == null) {
+            // no such user registered locally
+            h.onError(sender.username);
+            return;
+        }
+
+        // 2. Look up the UserKeys for that user
+        Box<UserKeys> keysBox = ObjectBox.get().boxFor(UserKeys.class);
+        QueryBuilder<UserKeys> q = keysBox.query();
+        q.link(UserKeys_.user)
+                .equal(User_.id, user.id);
+
+        UserKeys keys = q.build().findFirst();
+
+        // 3. Compare fingerprints
+        if (keys != null && sender.fingerPrint.equals(keys.fingerPrint)) {
+            h.onSuccess(user);
+        } else {
+            h.onError(sender.username);
+        }
     }
 
     public void handleRes() {

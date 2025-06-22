@@ -39,12 +39,14 @@ public final class NetworkResourceManager {
         public void onUnavailable() {
             super.onUnavailable();
 
-            Intent intent = new Intent(context, NoWifiActivity.class);
+            Intent intent = new Intent(context.getApplicationContext(), NoWifiActivity.class);
 
-            context.stopService(new Intent(context, ServerService.class));
-            context.stopService(new Intent(context, DiscoveryService.class));
-            PeerRepository.release();
-            AuthPeerRepository.release();
+            context.stopService(new Intent(context.getApplicationContext(), DiscoveryService.class));
+            context.stopService(new Intent(context.getApplicationContext(), ServerService.class));
+
+            CurrentUserManager.release();
+            AuthPeerRepository.getInstance().release();
+            PeerRepository.getInstance().release();
 
             context.startActivity(intent);
         }

@@ -25,4 +25,7 @@ public class ObjectBox {
     public synchronized static void destroy() {
         boxStore.close();
     }
+    public synchronized static boolean isDestroyed() {
+        return boxStore.isClosed();
+    }
 }

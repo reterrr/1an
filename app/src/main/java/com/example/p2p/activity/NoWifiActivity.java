@@ -16,6 +16,5 @@ public class NoWifiActivity extends Activity {
 
         binding = ActivityNoWifiBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
     }
 }

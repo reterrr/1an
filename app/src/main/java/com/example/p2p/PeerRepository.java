@@ -82,8 +82,8 @@ public class PeerRepository {
         peers.observe(owner, peerObserver);
     }
 
-    public static void release() {
-        peers.removeObserver(peerObserver);
+    public void release() {
+       // peers.removeObserver(peerObserver);
 
         previousPeers.clear();
         peers.postValue(new ArrayList<>());

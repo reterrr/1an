@@ -60,7 +60,7 @@ public class PeerAdapter extends RecyclerView.Adapter<PeerAdapter.PeerViewHolder
         }
 
         void bind(User user) {
-            binding.tvUsername.setText(user.username.replaceAll("(@[A-z-0-9.]+)*", ""));
+            binding.tvUsername.setText(user.username.replaceAll("(@[A-z-0-9.]+)+", ""));
             binding.tvIp.setText(user.networkInfo.getTarget().ip);
             binding.tvPort.setText(String.valueOf(user.networkInfo.getTarget().port));
             binding.getRoot().setOnClickListener(v -> onPeerClickListener.onClick(user));

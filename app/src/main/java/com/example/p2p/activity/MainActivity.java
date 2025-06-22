@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
         stopService(new Intent(this.getApplicationContext(), ServerService.class));
 
         CurrentUserManager.release();
-        AuthPeerRepository.release();
-        PeerRepository.release();
+        AuthPeerRepository.getInstance().release();
+        PeerRepository.getInstance().release();
     }
 }

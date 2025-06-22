@@ -3,23 +3,24 @@ package com.example.p2p;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.example.p2p.Model.NetworkInfo;
 import com.example.p2p.Model.User;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class AuthPeerRepository {
-    private static AuthPeerRepository instance = new AuthPeerRepository();
+    private static AuthPeerRepository instance;
     private static User localUser;
-    private static final MutableLiveData<List<User>> users = new MutableLiveData<>(List.of(localUser));
-
+    private static MutableLiveData<List<User>> users;
 
     private AuthPeerRepository() {
-        localUser = new User(CurrentUserManager.getUser().user.getTarget());
-        NetworkInfo info = localUser.networkInfo.getTarget();
-        info.ip = "127.0.0.1";
-        localUser.networkInfo.setTarget(info);
+        users = new MutableLiveData<>(new ArrayList<>());
+//        localUser = new User(CurrentUserManager.getUser().user.getTarget());
+//        NetworkInfo info = localUser.networkInfo.getTarget();
+//        info.ip = "127.0.0.1";
+//        info.port = info.port + 1;
+//        localUser.networkInfo.setTarget(info);
+//        add();
     }
 
     public static AuthPeerRepository getInstance() {
@@ -49,8 +50,8 @@ public class AuthPeerRepository {
         users.postValue(current);
     }
 
-    public static void release() {
-        localUser = new User(CurrentUserManager.getUser().user.getTarget());
+    public void release() {
+        localUser = null;
         instance = null;
         users.postValue(List.of());
     }

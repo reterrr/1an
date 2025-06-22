@@ -1,5 +1,7 @@
 package com.example.p2p;
 
+import com.example.p2p.Model.NetworkInfo;
+
 import java.net.InetSocketAddress;
 import java.util.function.Consumer;
 
@@ -65,7 +67,12 @@ public final class Server {
                     });
 
             outerFuture = b.bind(port).sync();
-            localFuture = b.bind(new InetSocketAddress("127.0.0.1", port));
+            localFuture = b.bind(new InetSocketAddress("127.0.0.1", port + 1)).sync();
+
+
+            NetworkInfo info = CurrentUserManager.getUser().user.getTarget().networkInfo.getTarget();
+            info.port = port;
+            CurrentUserManager.getUser().user.getTarget().networkInfo.setTarget(info);
 
             listener.onPortReady(getPort());
             outerFuture.channel().closeFuture().sync();

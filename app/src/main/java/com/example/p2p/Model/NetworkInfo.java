@@ -11,6 +11,13 @@ public class NetworkInfo {
     public String ip;
     public long port;
 
+    public NetworkInfo() {}
+
+    public NetworkInfo(NetworkInfo info) {
+        this.ip = info.ip;
+        this.port = info.port;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof NetworkInfo))

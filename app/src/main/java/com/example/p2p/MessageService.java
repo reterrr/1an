@@ -1,9 +1,19 @@
 package com.example.p2p;
 
-import com.example.p2p.Model.Chat;
+import com.example.p2p.Model.Message;
+import com.example.p2p.Model.NetworkInfo;
+import com.example.p2p.Model.State;
 import com.example.p2p.Model.User;
+import com.example.p2p.Request.Request;
+import com.example.p2p.Request.SendRequest;
+import com.example.p2p.Request.Sender;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Map;
+
+import io.objectbox.Box;
 
 public class MessageService {
     private Level level;
@@ -43,10 +53,50 @@ public class MessageService {
 
 
     public void send(User from, User to, MessageDto dto) {
-        if (! validate(dto)) return;
+        new Thread(() -> {
+            if (!validate(dto)) return;
+            String peerJson = E2ETool.fetchStoredPublicKey(to.id);
+            NetworkInfo info = to.networkInfo.getTarget();
+            Box<Message> messageBox = ObjectBox.get().boxFor(Message.class);
+            Sender me;
+            Sender receiver;
+            String encrypted;
 
+            try {
+                me = Sender.fromUser(from);
+                receiver = Sender.fromUser(to);
 
+                encrypted = E2ETool.encryptForPeer(peerJson, dto.content);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            var message = new Message();
+
+            message.sender.setTarget(from);
+            message.content = encrypted;
+            message.state = State.NOTHING;
+            message.receiver.setTarget(to);
+
+            long id = messageBox.put(message);
+
+            SendRequest request = new SendRequest(id, encrypted, me, receiver);
+
+            try {
+                var client = Client.getInstance(InetAddress.getByName(info.ip), info.port);
+                client.send(Request.create("/message/send", request));
+            } catch (UnknownHostException | JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+
+            var afterSendMessage = messageBox.get(id);
+            afterSendMessage.state = State.SENT;
+
+            messageBox.put(afterSendMessage);
+        }).start();
     }
+
+
 
     private enum MessageCode {
         SUCCESS(0),

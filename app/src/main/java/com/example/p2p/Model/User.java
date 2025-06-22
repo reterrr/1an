@@ -39,7 +39,7 @@ public class User {
         this.username = peer.userName;
 
         NetworkInfo info = new NetworkInfo();
-        info.ip = peer.ip.toString();
+        info.ip = peer.ip.getHostAddress();
         info.port = peer.port;
 
         this.networkInfo.setTarget(info);
@@ -47,9 +47,9 @@ public class User {
     }
 
     public User(User user) {
-        this.id = user.id;
+        //this.id = user.id;
         this.username = user.username;
-        this.networkInfo.setTarget(user.networkInfo.getTarget());
+        this.networkInfo.setTarget(new NetworkInfo(user.networkInfo.getTarget()));
         this.createdAt = user.createdAt;
     }
 

@@ -15,4 +15,5 @@
     <string name="register" />
     <string name="logo" />
     <string name="password" />
+    <string name="please_connect_to_wifi">Please connect to wifi</string>
 </resources>

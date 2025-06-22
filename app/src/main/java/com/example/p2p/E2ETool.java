@@ -7,24 +7,25 @@ import com.example.p2p.Model.User;
 import com.example.p2p.Model.UserKeys;
 import com.example.p2p.Model.UserKeys_;
 import com.example.p2p.Model.User_;
-import com.google.crypto.tink.KeyTemplate;
-import com.google.crypto.tink.KeyTemplates;
+
+import com.google.crypto.tink.HybridDecrypt;
+import com.google.crypto.tink.HybridEncrypt;
+import com.google.crypto.tink.JsonKeysetReader;
 import com.google.crypto.tink.KeysetHandle;
 import com.google.crypto.tink.JsonKeysetWriter;
 import com.google.crypto.tink.CleartextKeysetHandle;
-import com.google.crypto.tink.hybrid.HybridConfig;
 import com.google.crypto.tink.integration.android.AndroidKeysetManager;
 import com.google.crypto.tink.hybrid.HybridKeyTemplates;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import io.objectbox.Box;
-import io.objectbox.query.Query;
 import io.objectbox.query.QueryBuilder;
 
 public class E2ETool {
@@ -121,6 +122,42 @@ public class E2ETool {
         UserKeys keys = builder.build().findFirst();
 
         return keys.publicKey;
+    }
+
+    public static String encryptForPeer(String peerPublicKeyJson, String plaintext)
+            throws Exception {
+        KeysetHandle publicHandle = CleartextKeysetHandle.read(
+                JsonKeysetReader.withString(peerPublicKeyJson)
+        );
+        HybridEncrypt encrypt = publicHandle.getPrimitive(HybridEncrypt.class);
+
+        byte[] ct = encrypt.encrypt(
+                plaintext.getBytes(StandardCharsets.UTF_8),
+                /* associatedData = */ null
+        );
+        return Base64.encodeToString(ct, Base64.NO_WRAP);
+    }
+
+    public String decryptFromPeer(String ciphertextB64) throws Exception {
+        AndroidKeysetManager km = new AndroidKeysetManager.Builder()
+                .withSharedPref(context, prefName, masterKey)
+                .withKeyTemplate(HybridKeyTemplates.ECIES_P256_HKDF_HMAC_SHA256_AES128_GCM)
+                .build();
+
+        KeysetHandle privateHandle = km.getKeysetHandle();
+        HybridDecrypt decrypt = privateHandle.getPrimitive(HybridDecrypt.class);
+
+        byte[] ct = Base64.decode(ciphertextB64, Base64.NO_WRAP);
+        byte[] pt = decrypt.decrypt(ct, /* associatedData = */ null);
+        return new String(pt, StandardCharsets.UTF_8);
+    }
+
+    public static String fetchStoredPublicKey(long userId) {
+        Box<UserKeys> box = ObjectBox.get().boxFor(UserKeys.class);
+        QueryBuilder<UserKeys> qb = box.query()
+                .equal(UserKeys_.userId, userId);
+        UserKeys keys = qb.build().findFirst();
+        return keys == null ? null : keys.publicKey;
     }
 
     public static String computeFingerprint(String publicKeyJson) {
