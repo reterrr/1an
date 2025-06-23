@@ -72,6 +72,7 @@ public class PeerListActivity extends AppCompatActivity {
 
         stopService(new Intent(this, DiscoveryService.class));
         stopService(new Intent(this, ServerService.class));
+
         startActivity(new Intent(this, LoginActivity.class));
     }
 }

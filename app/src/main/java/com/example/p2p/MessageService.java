@@ -1,5 +1,9 @@
 package com.example.p2p;
 
+import android.content.Context;
+import android.util.Log;
+
+import com.example.p2p.Model.CurrentUser;
 import com.example.p2p.Model.Message;
 import com.example.p2p.Model.NetworkInfo;
 import com.example.p2p.Model.State;
@@ -16,26 +20,16 @@ import java.util.Map;
 import io.objectbox.Box;
 
 public class MessageService {
-    private Level level;
     private Valid valid;
 
+    public static Context c;
     private final Map<MessageCode, String> map = Map.of();
 
-    public interface Level {
-        void onSent();
-
-        void onReceived();
-
-        void onWatched(User[] users);
-    }
 
     public interface Valid {
         void onError(String message);
     }
 
-    public void setLevel(Level level) {
-        this.level = level;
-    }
 
     public void setValid(Valid valid) {
         this.valid = valid;
@@ -55,6 +49,7 @@ public class MessageService {
     public void send(User from, User to, MessageDto dto) {
         new Thread(() -> {
             if (!validate(dto)) return;
+
             String peerJson = E2ETool.fetchStoredPublicKey(to.id);
             NetworkInfo info = to.networkInfo.getTarget();
             Box<Message> messageBox = ObjectBox.get().boxFor(Message.class);
@@ -74,7 +69,7 @@ public class MessageService {
             var message = new Message();
 
             message.sender.setTarget(from);
-            message.content = encrypted;
+            message.content = dto.content;
             message.state = State.NOTHING;
             message.receiver.setTarget(to);
 
@@ -84,19 +79,39 @@ public class MessageService {
 
             try {
                 var client = Client.getInstance(InetAddress.getByName(info.ip), info.port);
-                client.send(Request.create("/message/send", request));
+                client.send(Request.create("/messages/send", request));
             } catch (UnknownHostException | JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
 
             var afterSendMessage = messageBox.get(id);
             afterSendMessage.state = State.SENT;
+            Log.d("MessageService", "Saved message ID: " + id + ", content: " + message.content);
 
             messageBox.put(afterSendMessage);
         }).start();
     }
 
+    public void onReceived(String message, User from) throws Exception {
+        Box<Message> messageBox = ObjectBox.get().boxFor(Message.class);
 
+        String decrypted = E2ETool.make()
+                .user(CurrentUserManager.getUser().user.getTarget())
+                .context(c)
+                .build()
+                .decryptFromPeer(message);
+
+        User me = CurrentUserManager.getUser().user.getTarget();
+
+        Message newMessage = new Message();
+        newMessage.sender.setTarget(from);
+        newMessage.receiver.setTarget(me);
+        newMessage.content = decrypted;
+
+        newMessage.state = State.RECEIVED;
+
+        messageBox.put(newMessage);
+    }
 
     private enum MessageCode {
         SUCCESS(0),

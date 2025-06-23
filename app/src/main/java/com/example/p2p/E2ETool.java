@@ -135,20 +135,22 @@ public class E2ETool {
                 plaintext.getBytes(StandardCharsets.UTF_8),
                 /* associatedData = */ null
         );
+
         return Base64.encodeToString(ct, Base64.NO_WRAP);
     }
 
     public String decryptFromPeer(String ciphertextB64) throws Exception {
-        AndroidKeysetManager km = new AndroidKeysetManager.Builder()
+        AndroidKeysetManager keySetManager = new AndroidKeysetManager.Builder()
                 .withSharedPref(context, prefName, masterKey)
                 .withKeyTemplate(HybridKeyTemplates.ECIES_P256_HKDF_HMAC_SHA256_AES128_GCM)
                 .build();
 
-        KeysetHandle privateHandle = km.getKeysetHandle();
+        KeysetHandle privateHandle = keySetManager.getKeysetHandle();
         HybridDecrypt decrypt = privateHandle.getPrimitive(HybridDecrypt.class);
 
         byte[] ct = Base64.decode(ciphertextB64, Base64.NO_WRAP);
         byte[] pt = decrypt.decrypt(ct, /* associatedData = */ null);
+
         return new String(pt, StandardCharsets.UTF_8);
     }
 

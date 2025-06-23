@@ -14,7 +14,9 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.example.p2p.AuthService;
 import com.example.p2p.CurrentUserManager;
 import com.example.p2p.DiscoveryService;
+import com.example.p2p.E2ETool;
 import com.example.p2p.LoginService;
+import com.example.p2p.MessageService;
 import com.example.p2p.NetworkResourceManager;
 import com.example.p2p.ObjectBox;
 import com.example.p2p.ServerService;
@@ -31,6 +33,7 @@ public class LoginActivity extends Activity {
 
         binding = ActivityLoginBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        MessageService.c = this;
 
         setupListeners();
     }
