@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
+import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.os.Bundle;
@@ -53,6 +54,22 @@ public class MainActivity extends AppCompatActivity {
         }
         cm.registerNetworkCallback(request, networkCallback);
         //startActivity(new Intent(this, LoginActivity.class));
+
+
+        Network[] networks = cm.getAllNetworks();
+        boolean hasWifi = false;
+        for (Network network : networks) {
+            NetworkCapabilities caps = cm.getNetworkCapabilities(network);
+            if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                hasWifi = true;
+                break;
+            }
+        }
+        if (hasWifi) {
+            startActivity(new Intent(this, LoginActivity.class));
+        } else {
+            startActivity(new Intent(this, NoWifiActivity.class));
+        }
     }
 
     @Override

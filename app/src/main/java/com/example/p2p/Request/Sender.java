@@ -64,4 +64,8 @@ public class Sender {
     public static String username2post(String username) {
         return username + "@" + Build.MODEL + "@" + NetworkResourceManager.getNetworkInfo().deviceIp.getHostAddress();
     }
+
+    public static String post2username(String username) {
+        return username.replaceAll("(@[A-z-0-9.]+)+", "");
+    }
 }

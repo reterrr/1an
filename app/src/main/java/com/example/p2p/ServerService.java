@@ -14,6 +14,8 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.p2p.RequestHandlers.AuthRequestHandler;
 import com.example.p2p.RequestHandlers.AuthResponseHandler;
+import com.example.p2p.RequestHandlers.ReceiveHandler;
+import com.example.p2p.RequestHandlers.SeenHandler;
 import com.example.p2p.RequestHandlers.SendHandler;
 
 import javax.net.ssl.SSLException;
@@ -64,6 +66,8 @@ public class ServerService extends Service {
 
         server.configMapping(r -> {
             r.register("/messages/send", new SendHandler());
+            r.register("/messages/received", new ReceiveHandler());
+            r.register("/messages/seen", new SeenHandler());
 
             r.register("/auth/request", new AuthRequestHandler());
             r.register("/auth/response", new AuthResponseHandler());

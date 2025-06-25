@@ -5,12 +5,14 @@ import android.util.Log;
 
 import com.example.p2p.AuthService;
 import com.example.p2p.Client;
+import com.example.p2p.CurrentUserManager;
 import com.example.p2p.MessageService;
 import com.example.p2p.Model.NetworkInfo;
 import com.example.p2p.Model.User;
 import com.example.p2p.Request.ReceiveResponse;
 import com.example.p2p.Request.Request;
 import com.example.p2p.Request.SendRequest;
+import com.example.p2p.Request.Sender;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.net.InetAddress;
@@ -37,11 +39,16 @@ public class SendHandler implements RequestHandler<SendRequest> {
                 }
 
                 NetworkInfo info = user.networkInfo.getTarget();
-                ReceiveResponse response = new ReceiveResponse(request.id, request.receiver);
+                ReceiveResponse response = null;
+                try {
+                    response = new ReceiveResponse(request.id, Sender.fromUser(CurrentUserManager.getUser().user.getTarget()));
+                } catch (UnknownHostException e) {
+                    throw new RuntimeException(e);
+                }
 
                 try {
                     var client = Client.getInstance(InetAddress.getByName(info.ip), info.port);
-                    client.send(Request.create("/message/received", response));
+                    client.send(Request.create("/messages/received", response));
                 } catch (UnknownHostException | JsonProcessingException e) {
                     throw new RuntimeException(e);
                 }

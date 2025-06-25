@@ -10,16 +10,15 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.p2p.CurrentUserManager;
+import com.example.p2p.Model.CurrentUser;
 import com.example.p2p.Model.Message;
-import com.example.p2p.Model.State;
 import com.example.p2p.Model.User;
-import com.example.p2p.ObjectBox;
 import com.example.p2p.R;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import io.objectbox.Box;
+import io.objectbox.relation.ToOne;
 
 public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int VIEW_TYPE_PEER = 0;
@@ -30,7 +29,10 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Override
     public int getItemViewType(int position) {
         Message msg = messages.get(position);
-        boolean fromMe = msg.sender.getTarget().id == CurrentUserManager.getUser().user.getTargetId();
+        CurrentUser me = CurrentUserManager.getUser();
+
+        if (me == null) return 0;
+        boolean fromMe = msg.sender.getTarget().id == me.user.getTargetId();
 
         return fromMe ? VIEW_TYPE_MINE : VIEW_TYPE_PEER;
     }

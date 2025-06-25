@@ -31,7 +31,6 @@ import javax.jmdns.ServiceEvent;
 import javax.jmdns.ServiceInfo;
 import javax.jmdns.ServiceListener;
 
-
 public class DiscoveryService extends Service {
     private static final String CHANNEL_ID = "DISCOVERY_CHANNEL";
     private static final String SERVICE_TYPE = "_chat._tcp.local.";
@@ -80,11 +79,11 @@ public class DiscoveryService extends Service {
         String ip = info.getInetAddresses()[0].getHostAddress();
         long port = info.getPort();
 
-//        User cuser = CurrentUserManager.getUser().user.getTarget();
-//        NetworkInfo ninfo = cuser.networkInfo.getTarget();
-//
-//        if (nickname.equals(Sender.username2post(cuser.username)) && ip.equals(ninfo.ip) && port == ninfo.port)
-//            return;
+        User cuser = CurrentUserManager.getUser().user.getTarget();
+        NetworkInfo ninfo = cuser.networkInfo.getTarget();
+
+        if (nickname.equals(Sender.username2post(cuser.username)) && ip.equals(ninfo.ip) && port == ninfo.port)
+            return;
 
         try {
             Peer peer = new Peer(nickname, InetAddress.getByName(ip), (int) port);

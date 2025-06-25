@@ -50,6 +50,7 @@
             android:layout_height="wrap_content"
             android:contentDescription="Send"
             android:src="@android:drawable/ic_menu_send" />
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

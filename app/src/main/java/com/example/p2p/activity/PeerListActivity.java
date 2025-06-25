@@ -52,6 +52,7 @@ public class PeerListActivity extends AppCompatActivity {
 //                }
             startActivity(i);
         });
+
         binding.rvPeers.setAdapter(peerAdapter);
 
         AuthPeerRepository.getInstance().getUsers().observe(this, updated ->

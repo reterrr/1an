@@ -17,4 +17,9 @@ public class NoWifiActivity extends Activity {
         binding = ActivityNoWifiBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
     }
+
+    @Override
+    public void onBackPressed() {
+
+    }
 }

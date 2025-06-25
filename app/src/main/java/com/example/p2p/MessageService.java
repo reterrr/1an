@@ -1,6 +1,7 @@
 package com.example.p2p;
 
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 
 import com.example.p2p.Model.CurrentUser;
@@ -11,6 +12,7 @@ import com.example.p2p.Model.User;
 import com.example.p2p.Request.Request;
 import com.example.p2p.Request.SendRequest;
 import com.example.p2p.Request.Sender;
+import com.example.p2p.activity.PeerListActivity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.net.InetAddress;
@@ -60,6 +62,7 @@ public class MessageService {
             try {
                 me = Sender.fromUser(from);
                 receiver = Sender.fromUser(to);
+                receiver.username = receiver.username.replaceFirst("(@[A-Za-z0-9.]+){2}", "");
 
                 encrypted = E2ETool.encryptForPeer(peerJson, dto.content);
             } catch (Exception e) {
@@ -79,16 +82,17 @@ public class MessageService {
 
             try {
                 var client = Client.getInstance(InetAddress.getByName(info.ip), info.port);
-                client.send(Request.create("/messages/send", request));
-            } catch (UnknownHostException | JsonProcessingException e) {
-                throw new RuntimeException(e);
+                if (client != null) {
+                    client.send(Request.create("/messages/send", request));
+                    var afterSendMessage = messageBox.get(id);
+                    afterSendMessage.state = State.SENT;
+                    Log.d("MessageService", "Saved message ID: " + id + ", content: " + message.content);
+
+                    messageBox.put(afterSendMessage);
+                }
+            } catch (UnknownHostException | JsonProcessingException ignored) {
+
             }
-
-            var afterSendMessage = messageBox.get(id);
-            afterSendMessage.state = State.SENT;
-            Log.d("MessageService", "Saved message ID: " + id + ", content: " + message.content);
-
-            messageBox.put(afterSendMessage);
         }).start();
     }
 
